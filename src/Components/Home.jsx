@@ -33,36 +33,58 @@ const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
 
-  // Scroll to section
+  // Scroll to section with offset for fixed navbar
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      const navbarHeight = 64; // Height of the fixed navbar
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      
       setActiveSection(sectionId);
       setIsMenuOpen(false);
     }
   };
 
-  // Handle scroll for active section
+  // Handle scroll for active section with debounce
   useEffect(() => {
+    let timeoutId;
+    
     const handleScroll = () => {
-      const sections = ['home', 'about', 'events', 'announcements', 'register', 'contact'];
-      const scrollPosition = window.scrollY + 100;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const { offsetTop, offsetHeight } = element;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section);
-            break;
+      timeoutId = setTimeout(() => {
+        const sections = ['home', 'about', 'events', 'announcements', 'register', 'contact'];
+        const navbarHeight = 64;
+        const scrollPosition = window.scrollY + navbarHeight + 100;
+
+        for (const section of sections) {
+          const element = document.getElementById(section);
+          if (element) {
+            const { offsetTop, offsetHeight } = element;
+            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+              setActiveSection(section);
+              break;
+            }
           }
         }
-      }
+      }, 100); // Debounce delay
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const stats = [
