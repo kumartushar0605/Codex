@@ -2,6 +2,8 @@ import React, { useState } from "react";
 // import { MdRemoveRedEye } from "react-icons/md";
 import { PiEyeDuotone } from "react-icons/pi";
 import { PiEyeSlashLight } from "react-icons/pi";
+import { ToastContainer, toast } from "react-toastify";
+import axios from 'axios';
 
 const Register = () => {
   const [activeTab, setActiveTab] = useState("register");
@@ -32,7 +34,7 @@ const Register = () => {
     e.preventDefault();
     setLogform({ ...Logform, [e.target.name]: e.target.value });
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (
       Signform.email === "" ||
@@ -42,16 +44,79 @@ const Register = () => {
       Signform.cpassword === "" ||
       Signform.regNo === ""
     ) {
-      alert("Please fill all the feilds");
+      toast.error("Please fill all the details", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
       return;
     } else if (Signform.password != Signform.cpassword) {
-      alert("Check Password");
+      toast.error("Check Password", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
       return;
     } else if (Signform.regNo.length != 10) {
-      alert("Check registration number");
+      toast.error("Registration Number should be of 10 digits", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
       return;
-    } else {
-      alert("Thank you");
+    } 
+     try{
+      const config = {
+        headers:{
+          "Content-type":"application/json",
+
+        },
+      };
+       await axios.post("http://reqres.in/api/register",{
+       name:Signform.name,email:Signform.email,regNo:Signform.regNo,branch:Signform.branch,password:Signform.password,cpassword:Signform.cpassword
+      },config);
+      toast.info("CODEX Welcomes You ☺️", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+
+
+     }
+     catch(e){
+      toast.error(`error occured ${e.message}`, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+
+     }
+      
       setSignform({
         name: "",
         email: "",
@@ -60,25 +125,77 @@ const Register = () => {
         password: "",
         cpassword: "",
       });
-    }
+   
   };
-  const handleLoginSubmit = (e)=>{
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if(Logform.lemail===""||Logform.lpassword===""){
-        alert("Please fill all the details");
-        return;
+    if (Logform.lemail === "" || Logform.lpassword === "") {
+      toast.error("Please fill all the details", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+      return;
     }
-    else if(Logform.lpassword.length!=10){
-        alert("Check Password");
-        return;
+    try{
+      const config = {
+        headers:{
+          "Content-type":"application/json",
 
-    }
-    alert("Welcome");
+        },
+      };
+       await axios.post("http://reqres.in/api/login",{
+        lemail:Logform.lemail,lpassword:Logform.lpassword
+      },config);
+      toast.info("Welcome Back 😎", {
+      position: "top-center",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "dark",
+    });
+
+
+     }
+     catch(e){
+      toast.error(`error occured ${e.message}`, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+
+     }
+      
+    
     setLogform({ lemail: "", lpassword: "" });
-
-  }
+  };
   return (
     <div className=" flex items-center justify-center bg-gradient-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm border border-slate-600/50 rounded-3xl p-8">
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <div className="w-full max-w-xl p-6 bg-gray-800 rounded-2xl shadow-lg">
         {/* Tab Headers */}
         <div className="mb-6 flex justify-center space-x-6 border-b border-gray-600">
@@ -275,7 +392,10 @@ const Register = () => {
                 </div>
               </div>
 
-              <button className="w-full mt-2 px-4 py-2 bg-gradient-to-r from-blue-800 to-purple-500 text-white rounded-md cursor-pointer hover:from-blue-700 hover:to-purple-600 font-bold text-xl" onClick={handleLoginSubmit}>
+              <button
+                className="w-full mt-2 px-4 py-2 bg-gradient-to-r from-blue-800 to-purple-500 text-white rounded-md cursor-pointer hover:from-blue-700 hover:to-purple-600 font-bold text-xl"
+                onClick={handleLoginSubmit}
+              >
                 Login
               </button>
             </form>
