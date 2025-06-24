@@ -1,11 +1,11 @@
-import Hero from '@/Components/Homepage/Hero';
-import About from '@/Components/Homepage/About';
-import Stats from '@/Components/Homepage/Stats';
-import EventHomepage from '@/Components/Homepage/EventHomepage';
-import Announcements from '@/Components/Homepage/Announcements';
-import Newsletter from '@/Components/Homepage/Newsletter';
-import Register from '@/Components/Homepage/Register';
-import Navbar from '@/Components/Homepage/Navbar';
+import Hero from "@/Components/Homepage/Hero";
+import About from "@/Components/Homepage/About";
+import Stats from "@/Components/Homepage/Stats";
+import EventHomepage from "@/Components/Homepage/EventHomepage";
+import Announcements from "@/Components/Homepage/Announcements";
+import Newsletter from "@/Components/Homepage/Newsletter";
+import Register from "@/Components/Homepage/Register";
+import Navbar from "@/Components/Homepage/Navbar";
 
 const Home = () => {
   return (
@@ -19,7 +19,5 @@ const Home = () => {
       <Newsletter />
       <Register />
     </div>
-  )
-}
-
-export default Home
+  );
+};
