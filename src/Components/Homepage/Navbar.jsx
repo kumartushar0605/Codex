@@ -110,7 +110,6 @@ import {
                 { id: 'about', label: 'About' },
                 { id: 'events', label: 'Events' },
                 { id: 'announcements', label: 'Announcements' },
-                { id: 'register', label: 'Register' },
                 { id: 'contact', label: 'Contact' }
               ].map((item) => (
                 <NavLink key={item.id} href={item.id} isActive={activeSection === item.id}>

@@ -9,8 +9,9 @@ import Stats from "@/Components/Homepage/Stats";
 import EventHomepage from "@/Components/Homepage/EventHomepage";
 import Announcements from "@/Components/Homepage/Announcements";
 import Newsletter from "@/Components/Homepage/Newsletter";
-import Register from "@/Components/Homepage/Register";
+import Register from "@/Components/Homepage/Contact";
 import Navbar from "@/Components/Homepage/Navbar";
+import Contact from "@/Components/Homepage/Contact";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
@@ -27,7 +28,7 @@ const Home = () => {
       <EventHomepage />
       <Announcements />
       <Newsletter />
-      <Register />
+      <Contact />
     </div>
   );
 };
