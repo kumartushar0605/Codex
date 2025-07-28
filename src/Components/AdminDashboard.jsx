@@ -1,24 +1,26 @@
 "use client"
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Calendar, MessageSquare, Trophy, Settings, 
   Plus, Edit, Trash2, Eye, UserCheck, UserX, 
   Bell, Code, Award, BarChart3, Filter,
-  Search, ChevronDown, X, Check
+  Search, ChevronDown, X, Check, LogOut
 } from 'lucide-react';
+import { useAdmin } from '@/context/AdminContext';
+import { eventAPI } from '@/services/api';
+import { toast } from 'react-toastify';
 
 const AdminDashboard = () => {
+  const { admin, logout } = useAdmin();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [loading, setLoading] = useState(false);
+  
+  // Real data from backend
+  const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([
     { id: 1, name: 'John Doe', email: 'john@university.edu', role: 'Member', year: '3rd', status: 'Active', joinDate: '2024-01-15' },
     { id: 2, name: 'Jane Smith', email: 'jane@university.edu', role: 'Mentor', year: '4th', status: 'Active', joinDate: '2024-01-10' },
     { id: 3, name: 'Bob Wilson', email: 'bob@university.edu', role: 'Member', year: '2nd', status: 'Pending', joinDate: '2024-06-18' }
-  ]);
-  
-  const [events, setEvents] = useState([
-    { id: 1, title: 'React Workshop', date: '2024-07-15', type: 'Workshop', status: 'Upcoming', registered: 25, limit: 50 },
-    { id: 2, title: 'Hackathon 2024', date: '2024-08-01', type: 'Hackathon', status: 'Upcoming', registered: 45, limit: 100 },
-    { id: 3, title: 'AI/ML Seminar', date: '2024-06-10', type: 'Seminar', status: 'Completed', registered: 35, limit: 40 }
   ]);
   
   const [announcements, setAnnouncements] = useState([
@@ -34,10 +36,101 @@ const AdminDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [eventFormData, setEventFormData] = useState({
+    title: '',
+    subtitle: '',
+    date: '',
+    time: '',
+    participantsLimit: '',
+    location: '',
+    duration: '',
+    participants: '',
+    prizes: '',
+    type: '',
+    color: '#3B82F6',
+    bgColor: '#1E40AF',
+    highlights: [],
+    description: ''
+  });
+
+  // Fetch events on component mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await eventAPI.getAllEvents();
+      if (response.success) {
+        setEvents(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast.error('Failed to fetch events');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateEvent = async () => {
+    try {
+      setLoading(true);
+      const response = await eventAPI.createEvent(eventFormData);
+      if (response.success) {
+        toast.success('Event created successfully!');
+        setShowModal(false);
+        setEventFormData({
+          title: '',
+          subtitle: '',
+          date: '',
+          time: '',
+          participantsLimit: '',
+          location: '',
+          duration: '',
+          participants: '',
+          prizes: '',
+          type: '',
+          color: '#3B82F6',
+          bgColor: '#1E40AF',
+          highlights: [],
+          description: ''
+        });
+        fetchEvents(); // Refresh events list
+      }
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast.error('Failed to create event');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      try {
+        setLoading(true);
+        const response = await eventAPI.deleteEvent(eventId);
+        if (response.success) {
+          toast.success('Event deleted successfully!');
+          fetchEvents(); // Refresh events list
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        toast.error('Failed to delete event');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const stats = {
     totalUsers: users.length,
-    activeEvents: events.filter(e => e.status === 'Upcoming').length,
+    activeEvents: events.length, // All events from backend
     pendingApprovals: users.filter(u => u.status === 'Pending').length + projects.filter(p => p.status === 'Pending').length,
     totalProjects: projects.length
   };
@@ -276,47 +369,56 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event) => (
-          <div key={event.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                event.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' :
-                event.status === 'Ongoing' ? 'bg-green-100 text-green-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {event.status}
-              </span>
-            </div>
-            
-            <div className="space-y-2 text-sm text-gray-600 mb-4">
-              <p><span className="font-medium">Date:</span> {event.date}</p>
-              <p><span className="font-medium">Type:</span> {event.type}</p>
-              <p><span className="font-medium">Registered:</span> {event.registered}/{event.limit}</p>
-            </div>
-            
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-              <div 
-                className="bg-blue-600 h-2 rounded-full" 
-                style={{width: `${(event.registered / event.limit) * 100}%`}}
-              ></div>
-            </div>
-            
-            <div className="flex space-x-2">
-              <button className="flex-1 flex items-center justify-center space-x-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg hover:bg-blue-100 transition-colors">
-                <Eye className="h-4 w-4" />
-                <span>View</span>
-              </button>
-              <button className="flex-1 flex items-center justify-center space-x-1 bg-green-50 text-green-600 py-2 px-3 rounded-lg hover:bg-green-100 transition-colors">
-                <Edit className="h-4 w-4" />
-                <span>Edit</span>
-              </button>
-              <button className="flex items-center justify-center bg-red-50 text-red-600 py-2 px-3 rounded-lg hover:bg-red-100 transition-colors">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
+        {loading ? (
+          <div className="col-span-full text-center py-12">
+            <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading events...</p>
           </div>
-        ))}
+        ) : events.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">No Events</h3>
+            <p className="text-gray-400">Create your first event to get started!</p>
+          </div>
+        ) : (
+          events.map((event) => (
+            <div key={event._id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                  {event.type}
+                </span>
+              </div>
+              
+              <div className="space-y-2 text-sm text-gray-600 mb-4">
+                <p><span className="font-medium">Date:</span> {new Date(event.date).toLocaleDateString()}</p>
+                <p><span className="font-medium">Time:</span> {event.time}</p>
+                <p><span className="font-medium">Location:</span> {event.location}</p>
+                <p><span className="font-medium">Duration:</span> {event.duration}</p>
+                {event.participantsLimit && (
+                  <p><span className="font-medium">Limit:</span> {event.participantsLimit}</p>
+                )}
+              </div>
+              
+              <div className="flex space-x-2">
+                <button className="flex-1 flex items-center justify-center space-x-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg hover:bg-blue-100 transition-colors">
+                  <Eye className="h-4 w-4" />
+                  <span>View</span>
+                </button>
+                <button className="flex-1 flex items-center justify-center space-x-1 bg-green-50 text-green-600 py-2 px-3 rounded-lg hover:bg-green-100 transition-colors">
+                  <Edit className="h-4 w-4" />
+                  <span>Edit</span>
+                </button>
+                <button 
+                  onClick={() => handleDeleteEvent(event._id)}
+                  className="flex items-center justify-center bg-red-50 text-red-600 py-2 px-3 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -468,16 +570,86 @@ const AdminDashboard = () => {
           <div className="space-y-6">
             {modalType === 'event' && (
               <>
-                <input type="text" placeholder="Event Title" className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" />
-                <input type="date" className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors" />
-                <select className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors">
-                  <option>Workshop</option>
-                  <option>Hackathon</option>
-                  <option>Seminar</option>
-                  <option>Competition</option>
+                <input 
+                  type="text" 
+                  placeholder="Event Title" 
+                  value={eventFormData.title}
+                  onChange={(e) => setEventFormData({...eventFormData, title: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Event Subtitle" 
+                  value={eventFormData.subtitle}
+                  onChange={(e) => setEventFormData({...eventFormData, subtitle: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="date" 
+                  value={eventFormData.date}
+                  onChange={(e) => setEventFormData({...eventFormData, date: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="time" 
+                  value={eventFormData.time}
+                  onChange={(e) => setEventFormData({...eventFormData, time: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Location" 
+                  value={eventFormData.location}
+                  onChange={(e) => setEventFormData({...eventFormData, location: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Duration (e.g., 2 hours)" 
+                  value={eventFormData.duration}
+                  onChange={(e) => setEventFormData({...eventFormData, duration: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Participants (e.g., 50 students)" 
+                  value={eventFormData.participants}
+                  onChange={(e) => setEventFormData({...eventFormData, participants: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Prizes" 
+                  value={eventFormData.prizes}
+                  onChange={(e) => setEventFormData({...eventFormData, prizes: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <select 
+                  value={eventFormData.type}
+                  onChange={(e) => setEventFormData({...eventFormData, type: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                >
+                  <option value="">Select Event Type</option>
+                  <option value="Workshop">Workshop</option>
+                  <option value="Hackathon">Hackathon</option>
+                  <option value="Seminar">Seminar</option>
+                  <option value="Competition">Competition</option>
+                  <option value="Webinar">Webinar</option>
                 </select>
-                <input type="number" placeholder="Participant Limit" className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" />
-                <textarea placeholder="Event Description" rows="3" className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"></textarea>
+                <input 
+                  type="number" 
+                  placeholder="Participant Limit (optional)" 
+                  value={eventFormData.participantsLimit}
+                  onChange={(e) => setEventFormData({...eventFormData, participantsLimit: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                />
+                <textarea 
+                  placeholder="Event Description" 
+                  rows="3" 
+                  value={eventFormData.description}
+                  onChange={(e) => setEventFormData({...eventFormData, description: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"
+                ></textarea>
               </>
             )}
             {modalType === 'announcement' && (
@@ -520,10 +692,21 @@ const AdminDashboard = () => {
               Cancel
             </button>
             {modalType !== 'analytics' && (
-              <button className="flex-1 py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300">
-                {modalType === 'event' ? 'Create Event' :
-                 modalType === 'announcement' ? 'Post Announcement' :
-                 modalType === 'user' ? 'Add User' : 'Save'}
+              <button 
+                onClick={modalType === 'event' ? handleCreateEvent : undefined}
+                disabled={loading}
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating...</span>
+                  </div>
+                ) : (
+                  modalType === 'event' ? 'Create Event' :
+                  modalType === 'announcement' ? 'Post Announcement' :
+                  modalType === 'user' ? 'Add User' : 'Save'
+                )}
               </button>
             )}
           </div>
@@ -590,11 +773,29 @@ const AdminDashboard = () => {
             <h2 className="text-2xl font-semibold bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">
               {sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
             </h2>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">A</span>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {admin?.fullName?.charAt(0) || 'A'}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-cyan-400 font-medium block text-sm">
+                    {admin?.fullName || 'Admin'}
+                  </span>
+                  <span className="text-gray-400 text-xs">
+                    {admin?.regNumber || 'Admin'}
+                  </span>
+                </div>
               </div>
-              <span className="text-cyan-400 font-medium">Admin</span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="text-sm">Logout</span>
+              </button>
             </div>
           </div>
         </div>

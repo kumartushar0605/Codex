@@ -3,12 +3,23 @@ import React, { useState, useEffect } from 'react';
 import {
     Menu,
     X,
+    User,
+    LogOut,
+    Settings,
+    Code
   } from 'lucide-react';
+import { useUser } from '@/context/UserContext';
+import { useAdmin } from '@/context/AdminContext';
+import { useRouter } from 'next/navigation';
 
 
   export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+    const [activeSection, setActiveSection] = useState('home');
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const { user, logout: userLogout, isAuthenticated: userAuthenticated } = useUser();
+    const { admin, logout: adminLogout, isAuthenticated: adminAuthenticated } = useAdmin();
+    const router = useRouter();
 
   // Scroll to section with offset for fixed navbar
   const scrollToSection = (sectionId) => {
@@ -82,6 +93,20 @@ import {
     </button>
   );
 
+  const handleLogout = async () => {
+    if (adminAuthenticated) {
+      await adminLogout();
+      router.push('/auth');
+    } else if (userAuthenticated) {
+      await userLogout();
+      router.push('/auth');
+    }
+  };
+
+  const handleAuthClick = () => {
+    router.push('/auth');
+  };
+
 
   return(
     <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700/50">
@@ -116,6 +141,54 @@ import {
                   {item.label}
                 </NavLink>
               ))}
+
+              {/* Auth/User Section */}
+              <div className="ml-4 relative">
+                {adminAuthenticated ? (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => router.push('/admin')}
+                      className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all"
+                    >
+                      <Code className="h-4 w-4" />
+                      <span className="text-sm font-medium">Admin</span>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="text-sm">Logout</span>
+                    </button>
+                  </div>
+                ) : userAuthenticated ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 px-3 py-2 bg-slate-800/50 rounded-lg">
+                      <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {user?.fullName?.charAt(0) || 'U'}
+                        </span>
+                      </div>
+                      <span className="text-sm text-gray-300">{user?.fullName || 'User'}</span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="text-sm">Logout</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleAuthClick}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-lg transition-all"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="text-sm font-medium">Sign In</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Mobile menu button */}
@@ -136,13 +209,72 @@ import {
                   { id: 'about', label: 'About' },
                   { id: 'events', label: 'Events' },
                   { id: 'announcements', label: 'Announcements' },
-                  { id: 'register', label: 'Register' },
                   { id: 'contact', label: 'Contact' }
                 ].map((item) => (
                   <NavLink key={item.id} href={item.id} isActive={activeSection === item.id}>
                     {item.label}
                   </NavLink>
                 ))}
+
+                {/* Mobile Auth Section */}
+                <div className="pt-2 border-t border-slate-700/50">
+                  {adminAuthenticated ? (
+                    <div className="flex flex-col space-y-2">
+                      <button
+                        onClick={() => {
+                          router.push('/admin');
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg"
+                      >
+                        <Code className="h-4 w-4" />
+                        <span className="text-sm font-medium">Admin Panel</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="text-sm">Logout</span>
+                      </button>
+                    </div>
+                  ) : userAuthenticated ? (
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex items-center space-x-2 px-3 py-2 bg-slate-700/50 rounded-lg">
+                        <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {user?.fullName?.charAt(0) || 'U'}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-300">{user?.fullName || 'User'}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="text-sm">Logout</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        handleAuthClick();
+                        setIsMenuOpen(false);
+                      }}
+                      className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg"
+                    >
+                      <User className="h-4 w-4" />
+                      <span className="text-sm font-medium">Sign In</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
