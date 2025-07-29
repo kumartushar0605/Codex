@@ -39,6 +39,9 @@ const AuthPage = () => {
     aggreeTerms: false
   });
 
+  // Separate state for skills input display
+  const [skillsInput, setSkillsInput] = useState('');
+
   // Redirect if already authenticated
   useEffect(() => {
     if (adminAuthenticated && !authLoading) {
@@ -52,7 +55,8 @@ const AuthPage = () => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : 
+              name === 'year' || name === 'teamSize' ? parseInt(value) || '' : value
     }));
   };
 
@@ -83,6 +87,58 @@ const AuthPage = () => {
             toast.error(result.error || 'Login failed');
           }
         } else {
+          // User signup validation
+          if (!formData.fullName || formData.fullName.length < 3) {
+            toast.error('Full name must be at least 3 characters long');
+            setLoading(false);
+            return;
+          }
+          if (!formData.email || !formData.email.includes('@')) {
+            toast.error('Please enter a valid email address');
+            setLoading(false);
+            return;
+          }
+          if (!formData.password || formData.password.length < 6) {
+            toast.error('Password must be at least 6 characters long');
+            setLoading(false);
+            return;
+          }
+          if (!formData.regNumber) {
+            toast.error('Registration number is required');
+            setLoading(false);
+            return;
+          }
+          if (!formData.branch) {
+            toast.error('Please select your branch');
+            setLoading(false);
+            return;
+          }
+          if (!formData.year) {
+            toast.error('Please select your year');
+            setLoading(false);
+            return;
+          }
+          if (!formData.teamName) {
+            toast.error('Team name is required');
+            setLoading(false);
+            return;
+          }
+          if (!formData.teamSize) {
+            toast.error('Team size is required');
+            setLoading(false);
+            return;
+          }
+          if (!formData.expectations) {
+            toast.error('Please share your expectations');
+            setLoading(false);
+            return;
+          }
+          if (!formData.aggreeTerms) {
+            toast.error('Please agree to the terms and conditions');
+            setLoading(false);
+            return;
+          }
+
           // User signup
           const result = await userSignup(formData);
           if (result.success) {
@@ -122,6 +178,7 @@ const AuthPage = () => {
       expectations: '',
       aggreeTerms: false
     });
+    setSkillsInput('');
   };
 
   const toggleMode = () => {
@@ -407,6 +464,66 @@ const AuthPage = () => {
                           max="10"
                           required
                         />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Skills
+                      </label>
+                      <input
+                        type="text"
+                        name="skills"
+                        value={skillsInput}
+                        onChange={(e) => {
+                          setSkillsInput(e.target.value);
+                          // Convert to array and update formData
+                          const skillsArray = e.target.value.split(',').map(skill => skill.trim()).filter(skill => skill);
+                          setFormData(prev => ({ ...prev, skills: skillsArray }));
+                        }}
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                        placeholder="Enter skills (comma separated)"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Dietary Preference
+                        </label>
+                        <select
+                          name="dietary"
+                          value={formData.dietary}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                        >
+                          <option value="">Select Dietary Preference</option>
+                          <option value="Vegetarian">Vegetarian</option>
+                          <option value="Vegan">Vegan</option>
+                          <option value="No Restrictions">No Restrictions</option>
+                          <option value="Gluten free">Gluten Free</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          T-shirt Size
+                        </label>
+                        <select
+                          name="tshirtSize"
+                          value={formData.tshirtSize}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                        >
+                          <option value="">Select T-shirt Size</option>
+                          <option value="XS">XS</option>
+                          <option value="S">S</option>
+                          <option value="M">M</option>
+                          <option value="L">L</option>
+                          <option value="XL">XL</option>
+                          <option value="XXL">XXL</option>
+                        </select>
                       </div>
                     </div>
 
