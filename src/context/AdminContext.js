@@ -32,32 +32,24 @@ export const AdminProvider = ({ children }) => {
   }, []);
 
     const login = async (regNumber, password) => {
-    try {
-      const response = await adminAPI.login(regNumber, password);
+   const ADMIN_USER = process.env.NEXT_PUBLIC_ADMIN_USER || 'CodexMaster04';
+  const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASS || 'codexbhai';
 
-      if (response && response.success) {
-        setAdmin(response.admin);
-        localStorage.setItem('adminInfo', JSON.stringify(response.admin));
-        return { success: true };
-      } else {
-        return { success: false, error: response?.message || 'Login failed' };
-      }
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
-      return { success: false, error: errorMessage };
-    }
+  if (regNumber === ADMIN_USER && password === ADMIN_PASS) {
+    const adminData = { regNumber, role: 'admin' };
+    setAdmin(adminData);
+    localStorage.setItem('adminInfo', JSON.stringify(adminData));
+    return { success: true };
+  } else {
+    return { success: false, error: 'Invalid admin credentials' };
+  }
   };
 
   const logout = async () => {
-    try {
-      await adminAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
       setAdmin(null);
       localStorage.removeItem('adminInfo');
       toast.success('Logged out successfully');
-    }
+    
   };
 
   const value = {

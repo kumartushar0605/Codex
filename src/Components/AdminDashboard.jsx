@@ -73,9 +73,11 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleCreateEvent = async () => {
+  const handleCreateEvent = async (e) => {
+    e.preventDefault();
     try {
       setLoading(true);
+      
       const response = await eventAPI.createEvent(eventFormData);
       if (response.success) {
         toast.success('Event created successfully!');
@@ -96,7 +98,7 @@ const AdminDashboard = () => {
           highlights: [],
           description: ''
         });
-        fetchEvents(); // Refresh events list
+        // fetchEvents(); // Refresh events list
       }
     } catch (error) {
       console.error('Error creating event:', error);
@@ -555,7 +557,7 @@ const AdminDashboard = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-2xl max-w-md w-full p-8 text-white relative">
+<div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 text-white relative">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">
               {modalType === 'event' ? 'Create New Event' :

@@ -69,7 +69,7 @@ const AuthPage = () => {
         // Admin authentication
         const result = await adminLogin(formData.regNumber, formData.password);
         
-        if (result.success) {
+        if (result) {
           toast.success('Admin login successful!');
           router.push('/admin');
         } else {
@@ -274,7 +274,7 @@ const AuthPage = () => {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Registration Number
+                    Admin UserName
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -284,7 +284,7 @@ const AuthPage = () => {
                       value={formData.regNumber}
                       onChange={handleInputChange}
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors"
-                      placeholder="Enter registration number"
+                      placeholder="Enter UserName"
                       required
                     />
                   </div>

@@ -71,7 +71,9 @@ export const eventAPI = {
 
   // Create event (admin only)
   createEvent: async (eventData) => {
+    console.log("dfasfa");
     const response = await api.post('/api/event/events', eventData);
+console.log(JSON.stringify(response, null, 2));
     return response.data;
   },
 
