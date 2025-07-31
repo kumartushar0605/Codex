@@ -60,11 +60,28 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
+  const signup = async (adminData) => {
+    try {
+      const response = await adminAPI.signup(adminData);
+      if (response && response.success) {
+        setAdmin(response.admin);
+        localStorage.setItem('adminInfo', JSON.stringify(response.admin));
+        return { success: true };
+      } else {
+        return { success: false, error: response?.message || 'Signup failed' };
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Signup failed';
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const value = {
     admin,
     loading,
     login,
     logout,
+    signup,
     isAuthenticated: !!admin,
   };
 

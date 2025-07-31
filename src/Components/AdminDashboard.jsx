@@ -50,8 +50,83 @@ const AdminDashboard = () => {
     color: '#3B82F6',
     bgColor: '#1E40AF',
     highlights: [],
+    schedule: [],
+    requirements: [],
     description: ''
   });
+
+  const [scheduleItem, setScheduleItem] = useState({
+    time: '',
+    activity: '',
+    day: 'Day 1'
+  });
+
+  const [requirementItem, setRequirementItem] = useState('');
+  const [highlightItem, setHighlightItem] = useState('');
+
+  // Helper functions for schedule and requirements
+  const addScheduleItem = () => {
+    console.log('➕ Adding schedule item:', scheduleItem);
+    if (scheduleItem.time && scheduleItem.activity) {
+      const newSchedule = [...eventFormData.schedule, { ...scheduleItem }];
+      console.log('📅 New schedule array:', newSchedule);
+      setEventFormData({
+        ...eventFormData,
+        schedule: newSchedule
+      });
+      setScheduleItem({ time: '', activity: '', day: 'Day 1' });
+      console.log('✅ Schedule item added successfully');
+    } else {
+      console.log('❌ Cannot add schedule item - missing time or activity');
+    }
+  };
+
+  const removeScheduleItem = (index) => {
+    const newSchedule = eventFormData.schedule.filter((_, i) => i !== index);
+    setEventFormData({ ...eventFormData, schedule: newSchedule });
+  };
+
+  const addRequirement = () => {
+    console.log('➕ Adding requirement:', requirementItem);
+    if (requirementItem.trim()) {
+      const newRequirements = [...eventFormData.requirements, requirementItem.trim()];
+      console.log('📋 New requirements array:', newRequirements);
+      setEventFormData({
+        ...eventFormData,
+        requirements: newRequirements
+      });
+      setRequirementItem('');
+      console.log('✅ Requirement added successfully');
+    } else {
+      console.log('❌ Cannot add requirement - empty or whitespace only');
+    }
+  };
+
+  const removeRequirement = (index) => {
+    const newRequirements = eventFormData.requirements.filter((_, i) => i !== index);
+    setEventFormData({ ...eventFormData, requirements: newRequirements });
+  };
+
+  const addHighlight = () => {
+    console.log('➕ Adding highlight:', highlightItem);
+    if (highlightItem.trim()) {
+      const newHighlights = [...eventFormData.highlights, highlightItem.trim()];
+      console.log('⭐ New highlights array:', newHighlights);
+      setEventFormData({
+        ...eventFormData,
+        highlights: newHighlights
+      });
+      setHighlightItem('');
+      console.log('✅ Highlight added successfully');
+    } else {
+      console.log('❌ Cannot add highlight - empty or whitespace only');
+    }
+  };
+
+  const removeHighlight = (index) => {
+    const newHighlights = eventFormData.highlights.filter((_, i) => i !== index);
+    setEventFormData({ ...eventFormData, highlights: newHighlights });
+  };
 
   // Fetch events on component mount
   useEffect(() => {
@@ -59,27 +134,115 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchEvents = async () => {
+    console.log('🔄 Fetching events...');
     try {
       setLoading(true);
+      console.log('📡 Making API call to getAllEvents...');
       const response = await eventAPI.getAllEvents();
+      console.log('📥 Fetch events response:', response);
+      console.log('📥 Response type:', typeof response);
+      console.log('📥 Response keys:', Object.keys(response));
+      
       if (response.success) {
+        console.log('✅ Events fetched successfully');
+        console.log('📊 Events data:', response.data);
+        console.log('📊 Number of events:', response.data?.length || 0);
         setEvents(response.data);
+      } else {
+        console.log('❌ Fetch events failed - response.success is false');
+        console.log('Response details:', response);
       }
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('❌ Error fetching events:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        response: error.response?.data
+      });
       toast.error('Failed to fetch events');
     } finally {
+      console.log('🏁 Setting loading to false for fetchEvents');
       setLoading(false);
     }
   };
 
   const handleCreateEvent = async () => {
+    console.log('=== EVENT CREATION STARTED ===');
+    console.log('Initial form data:', eventFormData);
+    
     try {
       setLoading(true);
-      const response = await eventAPI.createEvent(eventFormData);
-      if (response.success) {
+      console.log('Loading state set to true');
+      
+      // Debug: Log the form data being sent
+      console.log('Form data being sent:', eventFormData);
+      
+      // Validate required fields
+      const requiredFields = ['title', 'subtitle', 'date', 'time', 'location', 'duration', 'participants', 'prizes', 'type', 'color', 'bgColor', 'highlights', 'description'];
+      console.log('Checking required fields:', requiredFields);
+      
+      const missingFields = requiredFields.filter(field => {
+        if (field === 'highlights') {
+          const isEmpty = !eventFormData[field] || eventFormData[field].length === 0;
+          console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
+          return isEmpty;
+        }
+        const isEmpty = !eventFormData[field];
+        console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
+        return isEmpty;
+      });
+      
+      console.log('Missing fields:', missingFields);
+      
+      if (missingFields.length > 0) {
+        const fieldNames = missingFields.map(field => {
+          if (field === 'highlights') return 'at least one highlight';
+          return field;
+        });
+        console.log('Validation failed. Missing fields:', fieldNames);
+        toast.error(`Missing required fields: ${fieldNames.join(', ')}`);
+        return;
+      }
+      
+      console.log('✅ All required fields are present');
+      
+      // Convert date string to Date object if it's a string
+      console.log('Processing date field:', eventFormData.date);
+      const processedDate = eventFormData.date ? new Date(eventFormData.date).toISOString() : eventFormData.date;
+      console.log('Processed date:', processedDate);
+      
+      console.log('Processing participantsLimit field:', eventFormData.participantsLimit);
+      const processedParticipantsLimit = eventFormData.participantsLimit ? parseInt(eventFormData.participantsLimit) : undefined;
+      console.log('Processed participantsLimit:', processedParticipantsLimit);
+      
+      const eventDataToSend = {
+        ...eventFormData,
+        date: processedDate,
+        participantsLimit: processedParticipantsLimit
+      };
+      
+      console.log('📤 Final event data to send:', eventDataToSend);
+      console.log('📤 Data type check - highlights:', typeof eventDataToSend.highlights, Array.isArray(eventDataToSend.highlights));
+      console.log('📤 Data type check - schedule:', typeof eventDataToSend.schedule, Array.isArray(eventDataToSend.schedule));
+      console.log('📤 Data type check - requirements:', typeof eventDataToSend.requirements, Array.isArray(eventDataToSend.requirements));
+      
+      console.log('🚀 Making API call to createEvent...');
+      const response = await eventAPI.createEvent(eventDataToSend);
+      console.log('📥 Raw API Response:', response);
+      console.log('📥 Response type:', typeof response);
+      console.log('📥 Response keys:', Object.keys(response));
+      
+      // Check if response has the expected structure
+      console.log('🔍 Checking response structure...');
+      console.log('Response.success:', response.success);
+      console.log('Response.statusCode:', response.statusCode);
+      console.log('Response.message:', response.message);
+      
+      if (response.success || response.statusCode === 200 || response.statusCode === 201) {
+        console.log('✅ Event creation successful!');
         toast.success('Event created successfully!');
         setShowModal(false);
+        console.log('🔄 Resetting form data...');
         setEventFormData({
           title: '',
           subtitle: '',
@@ -94,15 +257,51 @@ const AdminDashboard = () => {
           color: '#3B82F6',
           bgColor: '#1E40AF',
           highlights: [],
+          schedule: [],
+          requirements: [],
           description: ''
         });
+        console.log('🔄 Refreshing events list...');
         fetchEvents(); // Refresh events list
+      } else {
+        console.log('❌ Event creation failed - response structure issue');
+        console.log('Response details:', response);
+        toast.error(response.message || 'Failed to create event');
       }
     } catch (error) {
-      console.error('Error creating event:', error);
-      toast.error('Failed to create event');
+      console.log('❌ ERROR OCCURRED DURING EVENT CREATION');
+      console.error('Full error object:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      if (error.response) {
+        console.error('📥 Error response status:', error.response.status);
+        console.error('📥 Error response statusText:', error.response.statusText);
+        console.error('📥 Error response headers:', error.response.headers);
+        console.error('📥 Error response data:', error.response.data);
+      } else if (error.request) {
+        console.error('📡 Network error - request was made but no response received');
+        console.error('📡 Request details:', error.request);
+      } else {
+        console.error('🔧 Error in request setup:', error.message);
+      }
+      
+      // Handle specific error cases
+      if (error.response?.data?.message?.includes('already in use')) {
+        console.log('🚫 Event type already exists error');
+        toast.error('Event type already exists. Please choose a different type.');
+      } else if (error.response?.data?.message?.includes('Incomplete details')) {
+        console.log('📝 Incomplete details error');
+        toast.error('Please fill in all required fields.');
+      } else {
+        console.log('❓ Unknown error type');
+        toast.error(error.response?.data?.message || 'Failed to create event');
+      }
     } finally {
+      console.log('🏁 Setting loading to false');
       setLoading(false);
+      console.log('=== EVENT CREATION PROCESS COMPLETED ===');
     }
   };
 
@@ -361,7 +560,7 @@ const AdminDashboard = () => {
         <h2 className="text-2xl font-bold">Event Management</h2>
         <button 
           onClick={() => openModal('event')}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors overflow-y"
         >
           <Plus className="h-4 w-4" />
           <span>Create Event</span>
@@ -555,8 +754,8 @@ const AdminDashboard = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-2xl max-w-md w-full p-8 text-white relative">
-          <div className="flex justify-between items-center mb-6">
+        <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col text-white relative">
+          <div className="flex justify-between items-center p-8 pb-6 border-b border-slate-600/50">
             <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">
               {modalType === 'event' ? 'Create New Event' :
                modalType === 'announcement' ? 'New Announcement' :
@@ -567,16 +766,20 @@ const AdminDashboard = () => {
               <X className="h-6 w-6" />
             </button>
           </div>
-          <div className="space-y-6">
+          <div className="flex-1 overflow-y-auto p-8 pt-6">
+            <div className="space-y-6">
             {modalType === 'event' && (
               <>
-                <input 
-                  type="text" 
-                  placeholder="Event Title" 
-                  value={eventFormData.title}
-                  onChange={(e) => setEventFormData({...eventFormData, title: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
-                />
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Event Title *" 
+                    value={eventFormData.title}
+                    onChange={(e) => setEventFormData({...eventFormData, title: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                  />
+                  {!eventFormData.title && <p className="text-red-400 text-xs mt-1">Title is required</p>}
+                </div>
                 <input 
                   type="text" 
                   placeholder="Event Subtitle" 
@@ -650,6 +853,143 @@ const AdminDashboard = () => {
                   onChange={(e) => setEventFormData({...eventFormData, description: e.target.value})}
                   className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"
                 ></textarea>
+
+                {/* Highlights Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-cyan-400">Event Highlights *</h4>
+                  <p className="text-gray-400 text-sm">Add at least one highlight to make your event more attractive</p>
+                  <div className="flex space-x-3">
+                    <input 
+                      type="text" 
+                      placeholder="Add highlight (e.g., Free food, Networking, Certificates)" 
+                      value={highlightItem}
+                      onChange={(e) => setHighlightItem(e.target.value)}
+                      className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                    />
+                    <button 
+                      onClick={addHighlight}
+                      className="px-4 py-3 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  {/* Display Highlights */}
+                  {eventFormData.highlights.length > 0 && (
+                    <div className="space-y-2">
+                      {eventFormData.highlights.map((highlight, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                          <span className="text-gray-300">{highlight}</span>
+                          <button 
+                            onClick={() => removeHighlight(index)}
+                            className="text-red-400 hover:text-red-300 ml-2"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {eventFormData.highlights.length === 0 && (
+                    <p className="text-red-400 text-xs">At least one highlight is required</p>
+                  )}
+                </div>
+
+                {/* Schedule Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-cyan-400">Event Schedule</h4>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <input 
+                        type="time" 
+                        placeholder="Time" 
+                        value={scheduleItem.time}
+                        onChange={(e) => setScheduleItem({...scheduleItem, time: e.target.value})}
+                        className="px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                      />
+                      <select 
+                        value={scheduleItem.day}
+                        onChange={(e) => setScheduleItem({...scheduleItem, day: e.target.value})}
+                        className="px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                      >
+                        <option value="Day 1">Day 1</option>
+                        <option value="Day 2">Day 2</option>
+                      </select>
+                      <button 
+                        onClick={addScheduleItem}
+                        className="px-4 py-3 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-colors"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="Activity Description" 
+                      value={scheduleItem.activity}
+                      onChange={(e) => setScheduleItem({...scheduleItem, activity: e.target.value})}
+                      className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                    />
+                  </div>
+                  
+                  {/* Display Schedule Items */}
+                  {eventFormData.schedule.length > 0 && (
+                    <div className="space-y-2">
+                      {eventFormData.schedule.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                          <div className="flex-1">
+                            <span className="text-cyan-400 font-medium">{item.time}</span>
+                            <span className="text-gray-300 mx-2">•</span>
+                            <span className="text-gray-300">{item.activity}</span>
+                            <span className="text-gray-500 ml-2">({item.day})</span>
+                          </div>
+                          <button 
+                            onClick={() => removeScheduleItem(index)}
+                            className="text-red-400 hover:text-red-300 ml-2"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Requirements Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-cyan-400">Requirements</h4>
+                  <div className="flex space-x-3">
+                    <input 
+                      type="text" 
+                      placeholder="Add requirement (e.g., Laptop, Basic JavaScript knowledge)" 
+                      value={requirementItem}
+                      onChange={(e) => setRequirementItem(e.target.value)}
+                      className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors" 
+                    />
+                    <button 
+                      onClick={addRequirement}
+                      className="px-4 py-3 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  {/* Display Requirements */}
+                  {eventFormData.requirements.length > 0 && (
+                    <div className="space-y-2">
+                      {eventFormData.requirements.map((req, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                          <span className="text-gray-300">{req}</span>
+                          <button 
+                            onClick={() => removeRequirement(index)}
+                            className="text-red-400 hover:text-red-300 ml-2"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </>
             )}
             {modalType === 'announcement' && (
@@ -687,28 +1027,31 @@ const AdminDashboard = () => {
               </div>
             )}
           </div>
-          <div className="flex space-x-3 mt-8">
-            <button onClick={closeModal} className="flex-1 py-3 px-4 border border-slate-600/50 text-gray-300 rounded-xl hover:bg-slate-700/50 transition-colors font-semibold">
-              Cancel
-            </button>
-            {modalType !== 'analytics' && (
-              <button 
-                onClick={modalType === 'event' ? handleCreateEvent : undefined}
-                disabled={loading}
-                className="flex-1 py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Creating...</span>
-                  </div>
-                ) : (
-                  modalType === 'event' ? 'Create Event' :
-                  modalType === 'announcement' ? 'Post Announcement' :
-                  modalType === 'user' ? 'Add User' : 'Save'
-                )}
+          </div>
+          <div className="p-8 pt-0 border-t border-slate-600/50">
+            <div className="flex space-x-3">
+              <button onClick={closeModal} className="flex-1 py-3 px-4 border border-slate-600/50 text-gray-300 rounded-xl hover:bg-slate-700/50 transition-colors font-semibold">
+                Cancel
               </button>
-            )}
+              {modalType !== 'analytics' && (
+                <button 
+                  onClick={modalType === 'event' ? handleCreateEvent : undefined}
+                  disabled={loading}
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Creating...</span>
+                    </div>
+                  ) : (
+                    modalType === 'event' ? 'Create Event' :
+                    modalType === 'announcement' ? 'Post Announcement' :
+                    modalType === 'user' ? 'Add User' : 'Save'
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
