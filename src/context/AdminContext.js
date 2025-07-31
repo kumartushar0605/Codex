@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { adminAPI } from '@/services/api';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
 
 const AdminContext = createContext();
 
@@ -16,6 +17,7 @@ export const useAdmin = () => {
 export const AdminProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Check if admin is logged in on mount
   useEffect(() => {
@@ -49,7 +51,8 @@ export const AdminProvider = ({ children }) => {
       setAdmin(null);
       localStorage.removeItem('adminInfo');
       toast.success('Logged out successfully');
-    
+      // Navigate to homepage after logout
+      router.push('/');
   };
 
   const value = {
