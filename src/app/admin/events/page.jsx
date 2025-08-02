@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { eventAPI } from '@/services/api';
 import { Calendar, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
@@ -138,83 +139,19 @@ const EventsPage = () => {
     }
   };
 
-  const handleCreateEvent = async () => {
+  const handleCreateEvent = async (e) => {
+     e.preventDefault();
     console.log('=== EVENT CREATION STARTED ===');
     console.log('Initial form data:', eventFormData);
     
-    try {
+     try {
       setLoading(true);
-      console.log('Loading state set to true');
-      
-      // Debug: Log the form data being sent
-      console.log('Form data being sent:', eventFormData);
-      
-      // Validate required fields
-      const requiredFields = ['title', 'subtitle', 'date', 'time', 'location', 'duration', 'participants', 'prizes', 'type', 'color', 'bgColor', 'highlights', 'description'];
-      console.log('Checking required fields:', requiredFields);
-      
-      const missingFields = requiredFields.filter(field => {
-        if (field === 'highlights') {
-          const isEmpty = !eventFormData[field] || eventFormData[field].length === 0;
-          console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
-          return isEmpty;
-        }
-        const isEmpty = !eventFormData[field];
-        console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
-        return isEmpty;
-      });
-      
-      console.log('Missing fields:', missingFields);
-      
-      if (missingFields.length > 0) {
-        const fieldNames = missingFields.map(field => {
-          if (field === 'highlights') return 'at least one highlight';
-          return field;
-        });
-        console.log('Validation failed. Missing fields:', fieldNames);
-        toast.error(`Missing required fields: ${fieldNames.join(', ')}`);
-        return;
-      }
-      
-      console.log('✅ All required fields are present');
-      
-      // Convert date string to Date object if it's a string
-      console.log('Processing date field:', eventFormData.date);
-      const processedDate = eventFormData.date ? new Date(eventFormData.date).toISOString() : eventFormData.date;
-      console.log('Processed date:', processedDate);
-      
-      console.log('Processing participantsLimit field:', eventFormData.participantsLimit);
-      const processedParticipantsLimit = eventFormData.participantsLimit ? parseInt(eventFormData.participantsLimit) : undefined;
-      console.log('Processed participantsLimit:', processedParticipantsLimit);
-      
-      const eventDataToSend = {
-        ...eventFormData,
-        date: processedDate,
-        participantsLimit: processedParticipantsLimit
-      };
-      
-      console.log('📤 Final event data to send:', eventDataToSend);
-      console.log('📤 Data type check - highlights:', typeof eventDataToSend.highlights, Array.isArray(eventDataToSend.highlights));
-      console.log('📤 Data type check - schedule:', typeof eventDataToSend.schedule, Array.isArray(eventDataToSend.schedule));
-      console.log('📤 Data type check - requirements:', typeof eventDataToSend.requirements, Array.isArray(eventDataToSend.requirements));
-      
-      console.log('🚀 Making API call to createEvent...');
-      const response = await eventAPI.createEvent(eventDataToSend);
-      console.log('📥 Raw API Response:', response);
-      console.log('📥 Response type:', typeof response);
-      console.log('📥 Response keys:', Object.keys(response));
-      
-      // Check if response has the expected structure
-      console.log('🔍 Checking response structure...');
-      console.log('Response.success:', response.success);
-      console.log('Response.statusCode:', response.statusCode);
-      console.log('Response.message:', response.message);
-      
-      if (response.success || response.statusCode === 200 || response.statusCode === 201) {
-        console.log('✅ Event creation successful!');
-        toast.success('Event created successfully!');
-        setShowModal(false);
-        console.log('🔄 Resetting form data...');
+    const response = await axios.post("http://localhost:5000/api/event/events", eventFormData);
+    
+    console.log("✅ Event created successfully:", response.data);
+     setLoading(false);
+     toast.success("Event created successfully!");
+
         setEventFormData({
           title: '',
           subtitle: '',
@@ -235,65 +172,165 @@ const EventsPage = () => {
         });
         console.log('🔄 Refreshing events list...');
         fetchEvents(); // Refresh events list
-      } else {
-        console.log('❌ Event creation failed - response structure issue');
-        console.log('Response details:', response);
-        toast.error(response.message || 'Failed to create event');
-      }
-    } catch (error) {
-      console.log('❌ ERROR OCCURRED DURING EVENT CREATION');
-      console.error('Full error object:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+
+
+  } catch (error) {
+    console.error("❌ Error creating event:", error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Failed to create event. Please try again.");
+    setLoading(false);
+  }
+    // try {
+    //   setLoading(true);
+    //   console.log('Loading state set to true');
       
-      if (error.response) {
-        console.error('📥 Error response status:', error.response.status);
-        console.error('📥 Error response statusText:', error.response.statusText);
-        console.error('📥 Error response headers:', error.response.headers);
-        console.error('📥 Error response data:', error.response.data);
-      } else if (error.request) {
-        console.error('📡 Network error - request was made but no response received');
-        console.error('📡 Request details:', error.request);
-      } else {
-        console.error('🔧 Error in request setup:', error.message);
-      }
+    //   // Debug: Log the form data being sent
+    //   console.log('Form data being sent:', eventFormData);
       
-      // Handle specific error cases
-      if (error.response?.data?.message?.includes('already in use')) {
-        console.log('🚫 Event type already exists error');
-        toast.error('Event type already exists. Please choose a different type.');
-      } else if (error.response?.data?.message?.includes('Incomplete details')) {
-        console.log('📝 Incomplete details error');
-        toast.error('Please fill in all required fields.');
-      } else {
-        console.log('❓ Unknown error type');
-        toast.error(error.response?.data?.message || 'Failed to create event');
-      }
-    } finally {
-      console.log('🏁 Setting loading to false');
-      setLoading(false);
-      console.log('=== EVENT CREATION PROCESS COMPLETED ===');
-    }
+    //   // Validate required fields
+    //   const requiredFields = ['title', 'subtitle', 'date', 'time', 'location', 'duration', 'participants', 'prizes', 'type', 'color', 'bgColor', 'highlights', 'description'];
+    //   console.log('Checking required fields:', requiredFields);
+      
+    //   const missingFields = requiredFields.filter(field => {
+    //     if (field === 'highlights') {
+    //       const isEmpty = !eventFormData[field] || eventFormData[field].length === 0;
+    //       console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
+    //       return isEmpty;
+    //     }
+    //     const isEmpty = !eventFormData[field];
+    //     console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
+    //     return isEmpty;
+    //   });
+      
+    //   console.log('Missing fields:', missingFields);
+      
+    //   if (missingFields.length > 0) {
+    //     const fieldNames = missingFields.map(field => {
+    //       if (field === 'highlights') return 'at least one highlight';
+    //       return field;
+    //     });
+    //     console.log('Validation failed. Missing fields:', fieldNames);
+    //     toast.error(`Missing required fields: ${fieldNames.join(', ')}`);
+    //     return;
+    //   }
+      
+    //   console.log('✅ All required fields are present');
+      
+    //   // Convert date string to Date object if it's a string
+    //   console.log('Processing date field:', eventFormData.date);
+    //   const processedDate = eventFormData.date ? new Date(eventFormData.date).toISOString() : eventFormData.date;
+    //   console.log('Processed date:', processedDate);
+      
+    //   console.log('Processing participantsLimit field:', eventFormData.participantsLimit);
+    //   const processedParticipantsLimit = eventFormData.participantsLimit ? parseInt(eventFormData.participantsLimit) : undefined;
+    //   console.log('Processed participantsLimit:', processedParticipantsLimit);
+      
+    //   const eventDataToSend = {
+    //     ...eventFormData,
+    //     date: processedDate,
+    //     participantsLimit: processedParticipantsLimit
+    //   };
+      
+    //   console.log('📤 Final event data to send:', eventDataToSend);
+    //   console.log('📤 Data type check - highlights:', typeof eventDataToSend.highlights, Array.isArray(eventDataToSend.highlights));
+    //   console.log('📤 Data type check - schedule:', typeof eventDataToSend.schedule, Array.isArray(eventDataToSend.schedule));
+    //   console.log('📤 Data type check - requirements:', typeof eventDataToSend.requirements, Array.isArray(eventDataToSend.requirements));
+      
+    //   console.log('🚀 Making API call to createEvent...');
+    //   const response = await eventAPI.createEvent(eventDataToSend);
+    //   console.log('📥 Raw API Response:', response);
+    //   console.log('📥 Response type:', typeof response);
+    //   console.log('📥 Response keys:', Object.keys(response));
+      
+    //   // Check if response has the expected structure
+    //   console.log('🔍 Checking response structure...');
+    //   console.log('Response.success:', response.success);
+    //   console.log('Response.statusCode:', response.statusCode);
+    //   console.log('Response.message:', response.message);
+      
+    //   if (response.success || response.statusCode === 200 || response.statusCode === 201) {
+    //     console.log('✅ Event creation successful!');
+    //     toast.success('Event created successfully!');
+    //     // setShowModal(false);
+    //     console.log('🔄 Resetting form data...');
+    //     setEventFormData({
+    //       title: '',
+    //       subtitle: '',
+    //       date: '',
+    //       time: '',
+    //       participantsLimit: '',
+    //       location: '',
+    //       duration: '',
+    //       participants: '',
+    //       prizes: '',
+    //       type: '',
+    //       color: '#3B82F6',
+    //       bgColor: '#1E40AF',
+    //       highlights: [],
+    //       schedule: [],
+    //       requirements: [],
+    //       description: ''
+    //     });
+    //     console.log('🔄 Refreshing events list...');
+    //     // fetchEvents(); // Refresh events list
+    //   } else {
+    //     console.log('❌ Event creation failed - response structure issue');
+    //     console.log('Response details:', response);
+    //     toast.error(response.message || 'Failed to create event');
+    //   }
+    // } catch (error) {
+    //   console.log('❌ ERROR OCCURRED DURING EVENT CREATION');
+    //   console.error('Full error object:', error);
+    //   console.error('Error name:', error.name);
+    //   console.error('Error message:', error.message);
+    //   console.error('Error stack:', error.stack);
+      
+    //   if (error.response) {
+    //     console.error('📥 Error response status:', error.response.status);
+    //     console.error('📥 Error response statusText:', error.response.statusText);
+    //     console.error('📥 Error response headers:', error.response.headers);
+    //     console.error('📥 Error response data:', error.response.data);
+    //   } else if (error.request) {
+    //     console.error('📡 Network error - request was made but no response received');
+    //     console.error('📡 Request details:', error.request);
+    //   } else {
+    //     console.error('🔧 Error in request setup:', error.message);
+    //   }
+      
+    //   // Handle specific error cases
+    //   if (error.response?.data?.message?.includes('already in use')) {
+    //     console.log('🚫 Event type already exists error');
+    //     toast.error('Event type already exists. Please choose a different type.');
+    //   } else if (error.response?.data?.message?.includes('Incomplete details')) {
+    //     console.log('📝 Incomplete details error');
+    //     toast.error('Please fill in all required fields.');
+    //   } else {
+    //     console.log('❓ Unknown error type');
+    //     toast.error(error.response?.data?.message || 'Failed to create event');
+    //   }
+    // } finally {
+    //   console.log('🏁 Setting loading to false');
+    //   setLoading(false);
+    //   console.log('=== EVENT CREATION PROCESS COMPLETED ===');
+    // }
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      try {
-        setLoading(true);
-        const response = await eventAPI.deleteEvent(eventId);
-        if (response.success) {
-          toast.success('Event deleted successfully!');
-          fetchEvents(); // Refresh events list
-        }
-      } catch (error) {
-        console.error('Error deleting event:', error);
-        toast.error('Failed to delete event');
-      } finally {
-        setLoading(false);
-      }
+  if (window.confirm('Are you sure you want to delete this event?')) {
+    console.log("eventID: " + eventId);
+
+    try {
+      const response = await axios.delete(`http://localhost:5000/api/event/events/${eventId}`);
+      
+      console.log("✅ Event deleted:", response.data);
+      toast.success("Event deleted successfully!");
+       fetchEvents();
+    } catch (error) {
+      console.error("❌ Error deleting event:", error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
     }
-  };
+  }
+};
+
   return (
     <div className="p-8 min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <div className="flex justify-between items-center mb-8">
@@ -328,10 +365,7 @@ const EventsPage = () => {
             </div>
 
             <form
-              onSubmit={e => {
-                e.preventDefault();
-                handleCreateEvent();
-              }}
+          onSubmit={handleCreateEvent}
               className="space-y-8"
             >
               {/* Basic Information Section */}
@@ -686,6 +720,7 @@ const EventsPage = () => {
                 <button
                   className="w-full py-4 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:from-purple-600 hover:via-blue-500 hover:to-cyan-500 text-white font-bold text-lg rounded-2xl transition-all duration-300 shadow-2xl hover:shadow-cyan-500/25 focus:outline-none focus:ring-4 focus:ring-cyan-400/50 disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.02]"
                   type="submit"
+                  
                   disabled={loading}
                 >
                   {loading ? (

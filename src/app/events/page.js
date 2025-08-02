@@ -1,10 +1,10 @@
 import React from 'react'
 import EventRegistrationPage from '@/Components/Events'
 
-const page = () => {
+const index = () => {
   return (
    <EventRegistrationPage/>
   )
 }
 
-export default page
+export default index

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar,
   Clock,
@@ -23,11 +23,17 @@ import {
   Linkedin,
   ExternalLink,
   Download,
-  Share2
+  Share2,
+  Loader2
 } from 'lucide-react';
 
 const EventRegistrationPage = () => {
-  const [selectedEvent, setSelectedEvent] = useState('hackathon');
+  const [events, setEvents] = useState({});
+  const [eventKeys, setEventKeys] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -47,114 +53,74 @@ const EventRegistrationPage = () => {
     agreeTerms: false
   });
 
-  const events = {
-    hackathon: {
-      title: 'HackSOA 2025',
-      subtitle: '48-Hour Innovation Challenge',
-      date: 'July 15-16, 2025',
-      time: '9:00 AM - 6:00 PM',
-      location: 'ITER Campus, Bhubaneswar',
-      duration: '48 Hours',
-      participants: '200+ Expected',
-      prizes: '₹50,000+ Prize Pool',
-      type: 'Hackathon',
-      color: 'from-pink-500 to-rose-500',
-      bgColor: 'from-pink-500/20 to-rose-500/20',
-      description: 'Join the most anticipated hackathon of the year! Build innovative solutions, collaborate with brilliant minds, and compete for amazing prizes.',
-      highlights: [
-        'Industry mentors and judges',
-        'Free meals and accommodation',
-        'Networking opportunities',
-        'Certificate for all participants',
-        'Exciting prizes and goodies'
-      ],
-      schedule: [
-        { time: '9:00 AM', activity: 'Registration & Welcome', day: 'Day 1' },
-        { time: '10:00 AM', activity: 'Opening Ceremony', day: 'Day 1' },
-        { time: '11:00 AM', activity: 'Hacking Begins!', day: 'Day 1' },
-        { time: '1:00 PM', activity: 'Lunch Break', day: 'Day 1' },
-        { time: '6:00 PM', activity: 'Dinner & Networking', day: 'Day 1' },
-        { time: '9:00 AM', activity: 'Breakfast', day: 'Day 2' },
-        { time: '2:00 PM', activity: 'Submission Deadline', day: 'Day 2' },
-        { time: '3:00 PM', activity: 'Presentations', day: 'Day 2' },
-        { time: '5:00 PM', activity: 'Results & Closing', day: 'Day 2' }
-      ],
-      requirements: [
-        'Laptop with necessary software',
-        'Valid student ID',
-        'Basic programming knowledge',
-        'Enthusiasm to learn and build!'
-      ]
-    },
-    workshop: {
-      title: 'Web Development Workshop',
-      subtitle: 'Master Modern Web Technologies',
-      date: 'June 28, 2025',
-      time: '2:00 PM - 5:00 PM',
-      location: 'Computer Lab 1, ITER',
-      duration: '3 Hours',
-      participants: '50+ Expected',
-      prizes: 'Certificate of Completion',
-      type: 'Workshop',
-      color: 'from-blue-500 to-indigo-500',
-      bgColor: 'from-blue-500/20 to-indigo-500/20',
-      description: 'Learn modern web development with React, Node.js, and build your first full-stack application.',
-      highlights: [
-        'Hands-on coding experience',
-        'Industry best practices',
-        'Project-based learning',
-        'Take-home resources',
-        'Q&A with experts'
-      ],
-      schedule: [
-        { time: '2:00 PM', activity: 'Introduction to Modern Web Dev', day: 'Day 1' },
-        { time: '2:30 PM', activity: 'React Fundamentals', day: 'Day 1' },
-        { time: '3:30 PM', activity: 'Break', day: 'Day 1' },
-        { time: '3:45 PM', activity: 'Backend with Node.js', day: 'Day 1' },
-        { time: '4:30 PM', activity: 'Building Your First App', day: 'Day 1' },
-        { time: '5:00 PM', activity: 'Q&A & Wrap-up', day: 'Day 1' }
-      ],
-      requirements: [
-        'Laptop with code editor',
-        'Basic HTML/CSS knowledge',
-        'Node.js installed',
-        'Enthusiasm to learn!'
-      ]
-    },
-    contest: {
-      title: 'Competitive Programming Contest',
-      subtitle: 'Test Your Algorithmic Skills',
-      date: 'June 22, 2025',
-      time: '10:00 AM - 2:00 PM',
-      location: 'Online Platform',
-      duration: '4 Hours',
-      participants: '100+ Expected',
-      prizes: '₹15,000 Prize Pool',
-      type: 'Contest',
-      color: 'from-green-500 to-teal-500',
-      bgColor: 'from-green-500/20 to-teal-500/20',
-      description: 'Challenge yourself with algorithmic problems and compete with the best coders from various colleges.',
-      highlights: [
-        'Multiple difficulty levels',
-        'Real-time leaderboard',
-        'Editorial solutions',
-        'Certificates for top performers',
-        'Recognition on social media'
-      ],
-      schedule: [
-        { time: '10:00 AM', activity: 'Contest Begins', day: 'Day 1' },
-        { time: '10:15 AM', activity: 'Problem Statement Release', day: 'Day 1' },
-        { time: '12:00 PM', activity: 'Mid-contest Update', day: 'Day 1' },
-        { time: '2:00 PM', activity: 'Contest Ends', day: 'Day 1' },
-        { time: '2:30 PM', activity: 'Results Announcement', day: 'Day 1' },
-        { time: '3:00 PM', activity: 'Editorial Discussion', day: 'Day 1' }
-      ],
-      requirements: [
-        'Stable internet connection',
-        'Programming language knowledge',
-        'Problem-solving mindset',
-        'Competitive spirit!'
-      ]
+useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/event/events');
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+
+      const { data: eventsArray } = await response.json(); // <-- fix here
+
+      const transformedEvents = {};
+      const keys = [];
+
+      eventsArray.forEach((event, index) => {
+        const key = event.title.toLowerCase().replace(/\s+/g, '');
+        keys.push(key);
+        transformedEvents[key] = {
+          ...event,
+          color: getEventColor(event.type),
+          bgColor: getEventBgColor(event.type),
+          highlights: event.highlights || [],
+          schedule: event.schedule || [],
+          requirements: event.requirements || []
+        };
+      });
+
+      setEvents(transformedEvents);
+      setEventKeys(keys);
+      if (keys.length > 0) {
+        setSelectedEvent(keys[0]);
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching events:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchEvents();
+}, []);
+
+
+  // Helper functions for colors based on event type
+  const getEventColor = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'hackathon':
+        return 'from-pink-500 to-rose-500';
+      case 'workshop':
+        return 'from-blue-500 to-indigo-500';
+      case 'contest':
+        return 'from-green-500 to-teal-500';
+      default:
+        return 'from-purple-500 to-indigo-500';
+    }
+  };
+
+  const getEventBgColor = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'hackathon':
+        return 'from-pink-500/20 to-rose-500/20';
+      case 'workshop':
+        return 'from-blue-500/20 to-indigo-500/20';
+      case 'contest':
+        return 'from-green-500/20 to-teal-500/20';
+      default:
+        return 'from-purple-500/20 to-indigo-500/20';
     }
   };
 
@@ -183,12 +149,98 @@ const EventRegistrationPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Registration data:', formData);
-    alert('Registration submitted successfully!');
+    setSubmitting(true);
+    
+    try {
+      const eventName = currentEvent?.title || selectedEvent;
+      const response = await fetch(`http://localhost:5000/api/sendevent?event=${encodeURIComponent(eventName)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          eventName: eventName,
+          eventType: currentEvent?.type
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit registration');
+      }
+
+      const result = await response.json();
+      alert('Registration submitted successfully!');
+      
+      // Reset form
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        regNumber: '',
+        branch: '',
+        year: '',
+        experience: '',
+        github: '',
+        linkedin: '',
+        teamName: '',
+        teamSize: '1',
+        skills: [],
+        dietary: '',
+        tshirtSize: '',
+        expectations: '',
+        agreeTerms: false
+      });
+    } catch (err) {
+      console.error('Registration error:', err);
+      alert('Failed to submit registration. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-cyan-400" />
+          <p className="text-gray-300">Loading events...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <X className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Error Loading Events</h2>
+          <p className="text-gray-300 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentEvent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-300">No events available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
@@ -230,19 +282,22 @@ const EventRegistrationPage = () => {
           </h1>
           
           <div className="flex flex-wrap gap-4">
-            {Object.entries(events).map(([key, event]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedEvent(key)}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  selectedEvent === key
-                    ? `bg-gradient-to-r ${event.color} text-white shadow-lg`
-                    : 'bg-slate-800/50 text-gray-300 hover:bg-slate-700/50 border border-slate-700/50'
-                }`}
-              >
-                {event.title}
-              </button>
-            ))}
+            {eventKeys.map((key) => {
+              const event = events[key];
+              return (
+                <button
+                  key={key}
+                  onClick={() => setSelectedEvent(key)}
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    selectedEvent === key
+                      ? `bg-gradient-to-r ${event.color} text-white shadow-lg`
+                      : 'bg-slate-800/50 text-gray-300 hover:bg-slate-700/50 border border-slate-700/50'
+                  }`}
+                >
+                  {event.title}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -288,50 +343,56 @@ const EventRegistrationPage = () => {
             </div>
 
             {/* Highlights */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Event Highlights</h3>
-              <ul className="space-y-2">
-                {currentEvent.highlights.map((highlight, index) => (
-                  <li key={index} className="flex items-center text-sm">
-                    <CheckCircle size={16} className="mr-3 text-green-400 flex-shrink-0" />
-                    <span className="text-gray-300">{highlight}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {currentEvent.highlights && currentEvent.highlights.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Event Highlights</h3>
+                <ul className="space-y-2">
+                  {currentEvent.highlights.map((highlight, index) => (
+                    <li key={index} className="flex items-center text-sm">
+                      <CheckCircle size={16} className="mr-3 text-green-400 flex-shrink-0" />
+                      <span className="text-gray-300">{highlight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Schedule */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Schedule</h3>
-              <div className="space-y-3">
-                {currentEvent.schedule.map((item, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className="w-20 text-xs text-cyan-400 font-medium mr-3 mt-1">
-                      {item.time}
+            {currentEvent.schedule && currentEvent.schedule.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Schedule</h3>
+                <div className="space-y-3">
+                  {currentEvent.schedule.map((item, index) => (
+                    <div key={index} className="flex items-start">
+                      <div className="w-20 text-xs text-cyan-400 font-medium mr-3 mt-1">
+                        {item.time}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-300">{item.activity}</p>
+                        {item.day && (
+                          <span className="text-xs text-gray-500">{item.day}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-300">{item.activity}</p>
-                      {item.day && (
-                        <span className="text-xs text-gray-500">{item.day}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Requirements */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Requirements</h3>
-              <ul className="space-y-2">
-                {currentEvent.requirements.map((req, index) => (
-                  <li key={index} className="flex items-center text-sm">
-                    <Star size={16} className="mr-3 text-yellow-400 flex-shrink-0" />
-                    <span className="text-gray-300">{req}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {currentEvent.requirements && currentEvent.requirements.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4">Requirements</h3>
+                <ul className="space-y-2">
+                  {currentEvent.requirements.map((req, index) => (
+                    <li key={index} className="flex items-center text-sm">
+                      <Star size={16} className="mr-3 text-yellow-400 flex-shrink-0" />
+                      <span className="text-gray-300">{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Registration Form */}
@@ -497,7 +558,7 @@ const EventRegistrationPage = () => {
                 </div>
 
                 {/* Team Information (for Hackathon) */}
-                {selectedEvent === 'hackathon' && (
+                {currentEvent.type?.toLowerCase() === 'hackathon' && (
                   <div>
                     <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
                       <Users size={20} className="mr-2 text-cyan-400" />
@@ -634,14 +695,32 @@ const EventRegistrationPage = () => {
                       of Codex Club.
                     </label>
                   </div>
-                  </div>
-                  </form>
-                  </div>
-                  </div>
-                  </div>
-                  </div>
 
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={submitting || !formData.agreeTerms}
+                    className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 ${
+                      submitting || !formData.agreeTerms
+                        ? 'bg-gray-600 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-lg hover:shadow-xl'
+                    }`}
+                  >
+                    {submitting ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                        Submitting Registration...
+                      </div>
+                    ) : (
+                      `Register for ${currentEvent.title}`
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
-export default EventRegistrationPage
+export default EventRegistrationPage;

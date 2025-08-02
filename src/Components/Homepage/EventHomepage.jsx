@@ -1,42 +1,45 @@
+"use client";
 
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Calendar, ArrowRight, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 export default function EventHomepage() {
   const router = useRouter();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const events = [
-    {
-      title: 'HackSOA 2025',
-      date: 'July 15-16, 2025',
-      time: '9:00 AM - 6:00 PM',
-      location: 'ITER Campus',
-      type: 'Hackathon',
-      description: 'Annual 48-hour hackathon with exciting prizes and industry mentors.',
-      status: 'upcoming',
-      color: 'from-pink-500 to-rose-500'
-    },
-    {
-      title: 'Web Development Workshop',
-      date: 'June 28, 2025',
-      time: '2:00 PM - 5:00 PM',
-      location: 'Computer Lab 1',
-      type: 'Workshop',
-      description: 'Learn modern web development with React and Node.js.',
-      status: 'upcoming',
-      color: 'from-blue-500 to-indigo-500'
-    },
-    {
-      title: 'Competitive Programming Contest',
-      date: 'June 22, 2025',
-      time: '10:00 AM - 2:00 PM',
-      location: 'Online Platform',
-      type: 'Contest',
-      description: 'Test your algorithmic skills in our monthly coding contest.',
-      status: 'upcoming',
-      color: 'from-green-500 to-teal-500'
+ useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/event/events");
+      console.log("API raw response:", response.data);
+
+      const allEvents = response.data.data; // <-- FIX HERE
+
+      if (!Array.isArray(allEvents)) {
+        throw new Error("Expected an array of events.");
+      }
+
+      const shuffledEvents = allEvents.sort(() => 0.5 - Math.random());
+      setEvents(shuffledEvents.slice(0, 3));
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch events:", error);
+      toast.error("Failed to load events.");
+      setLoading(false)
     }
-  ];
+  };
+
+  fetchEvents();
+}, []);
+
+
+  if (loading) {
+    return <div className="text-center py-10 text-gray-300">Loading events...</div>;
+  }
 
   return (
     <section id="events" className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-800/20">
@@ -53,9 +56,9 @@ export default function EventHomepage() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8 mb-10">
-          {events.map((event, index) => (
+          {events.map((event) => (
             <div
-              key={index}
+              key={event._id}
               className="bg-gradient-to-br from-slate-800/50 to-slate-700/30 backdrop-blur-sm border border-slate-600/50 rounded-2xl overflow-hidden hover:border-cyan-500/50 transition-all duration-300 group"
             >
               <div className={`h-2 bg-gradient-to-r ${event.color}`}></div>
@@ -64,7 +67,7 @@ export default function EventHomepage() {
                   <span className={`px-3 py-1 bg-gradient-to-r ${event.color} rounded-full text-xs font-semibold text-white`}>
                     {event.type}
                   </span>
-                  <span className="text-xs text-gray-400">{event.status}</span>
+                  <span className="text-xs text-gray-400">Upcoming</span>
                 </div>
 
                 <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
@@ -73,7 +76,7 @@ export default function EventHomepage() {
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center text-sm text-gray-400">
                     <Calendar size={16} className="mr-2" />
-                    {event.date} • {event.time}
+                    {new Date(event.date).toLocaleDateString()} • {event.time}
                   </div>
                   <div className="flex items-center text-sm text-gray-400">
                     <MapPin size={16} className="mr-2" />
