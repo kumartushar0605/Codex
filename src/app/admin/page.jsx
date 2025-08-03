@@ -19,7 +19,7 @@ const AdminPage = () => {
           router.push('/');
         } else {
           // No one is logged in, redirect to auth page
-          router.push('/auth');
+          router.push('/');
         }
       }
     }
