@@ -31,7 +31,7 @@ const NotFoundPage = () => {
           </h1>
 
           <p className="text-lg text-slate-300 mb-8">
-            The page you're looking for doesn't exist.
+            The page you`&apos;`re looking for doesn`&apos;`t exist.
           </p>
 
           {/* Action Buttons */}
