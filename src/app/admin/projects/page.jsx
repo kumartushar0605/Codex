@@ -86,11 +86,11 @@ const ProjectsPage = () => {
       {/* Header Section */}
       <div className="flex flex-col gap-4 mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-200 tracking-tight drop-shadow">Project Management</h1>
             <p className="text-slate-400 text-sm sm:text-base mt-1">Manage and review student project submissions</p>
           </div>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold shadow-lg transition-all duration-200 text-sm sm:text-base w-full sm:w-auto justify-center">
+          <button className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold shadow-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto justify-center flex-shrink-0">
             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Add Project</span>
           </button>
@@ -98,22 +98,22 @@ const ProjectsPage = () => {
 
         {/* Search and Filter Section */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 pointer-events-none" />
             <input
               type="text"
               placeholder="Search projects, teams, or technologies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 sm:py-3 bg-slate-800/50 text-white border border-slate-600 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200 placeholder-slate-400 text-sm sm:text-base"
+              className="w-full pl-10 pr-4 py-2 sm:py-3 bg-slate-800/50 text-white border border-slate-600 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-colors duration-200 placeholder-slate-400 text-sm sm:text-base"
             />
           </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+          <div className="relative flex-shrink-0">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 pointer-events-none" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 sm:py-3 bg-slate-800/50 text-white border border-slate-600 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200 text-sm sm:text-base appearance-none cursor-pointer min-w-[140px]"
+              className="pl-10 pr-8 py-2 sm:py-3 bg-slate-800/50 text-white border border-slate-600 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-colors duration-200 text-sm sm:text-base appearance-none cursor-pointer w-full sm:w-[160px]"
             >
               <option value="All">All Status</option>
               <option value="Pending">Pending</option>
@@ -126,20 +126,20 @@ const ProjectsPage = () => {
 
         {/* Stats Section */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50">
-            <div className="text-cyan-400 text-lg sm:text-2xl font-bold">{projects.length}</div>
+          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 min-h-[80px] flex flex-col justify-center">
+            <div className="text-cyan-400 text-lg sm:text-2xl font-bold tabular-nums">{projects.length}</div>
             <div className="text-slate-400 text-xs sm:text-sm">Total Projects</div>
           </div>
-          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50">
-            <div className="text-yellow-400 text-lg sm:text-2xl font-bold">{projects.filter(p => p.status === 'Pending').length}</div>
+          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 min-h-[80px] flex flex-col justify-center">
+            <div className="text-yellow-400 text-lg sm:text-2xl font-bold tabular-nums">{projects.filter(p => p.status === 'Pending').length}</div>
             <div className="text-slate-400 text-xs sm:text-sm">Pending</div>
           </div>
-          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50">
-            <div className="text-green-400 text-lg sm:text-2xl font-bold">{projects.filter(p => p.status === 'Approved').length}</div>
+          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 min-h-[80px] flex flex-col justify-center">
+            <div className="text-green-400 text-lg sm:text-2xl font-bold tabular-nums">{projects.filter(p => p.status === 'Approved').length}</div>
             <div className="text-slate-400 text-xs sm:text-sm">Approved</div>
           </div>
-          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50">
-            <div className="text-blue-400 text-lg sm:text-2xl font-bold">{projects.filter(p => p.status === 'In Review').length}</div>
+          <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700/50 min-h-[80px] flex flex-col justify-center">
+            <div className="text-blue-400 text-lg sm:text-2xl font-bold tabular-nums">{projects.filter(p => p.status === 'In Review').length}</div>
             <div className="text-slate-400 text-xs sm:text-sm">In Review</div>
           </div>
         </div>
@@ -156,7 +156,7 @@ const ProjectsPage = () => {
           {/* Mobile Card View */}
           <div className="block lg:hidden space-y-4">
             {filteredProjects.map((project) => (
-              <div key={project.id} className="bg-slate-900/80 rounded-xl p-4 border border-slate-700/50 hover:shadow-xl transition-all duration-200 group relative overflow-hidden">
+              <div key={project.id} className="bg-slate-900/80 rounded-xl p-4 border border-slate-700/50 hover:shadow-xl transition-shadow duration-200 group relative overflow-hidden">
                 {/* Priority indicator */}
                 <div className={`absolute top-0 right-0 w-1 h-full ${getPriorityColor(project.priority)} opacity-60`}></div>
 
@@ -236,60 +236,60 @@ const ProjectsPage = () => {
           {/* Desktop Table View */}
           <div className="hidden lg:block bg-slate-900/80 rounded-xl shadow-lg overflow-hidden border border-slate-700/50">
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead className="bg-slate-800/50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Project</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Team</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Tech Stack</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Submitted</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/4">Project</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/8">Team</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/6">Tech Stack</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/8">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/8">Category</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/8">Submitted</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-300 uppercase tracking-wider w-1/6">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-slate-900/40 divide-y divide-slate-700/50">
                   {filteredProjects.map((project) => (
                     <tr key={project.id} className="hover:bg-slate-800/50 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-1 h-12 rounded-full ${getPriorityColor(project.priority)}`}></div>
-                          <div>
-                            <div className="text-sm font-medium text-cyan-200 group-hover:text-cyan-400 transition-colors">
+                      <td className="px-6 py-4 h-20">
+                        <div className="flex items-center gap-3 h-full">
+                          <div className={`w-1 h-12 rounded-full ${getPriorityColor(project.priority)} flex-shrink-0`}></div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-cyan-200 group-hover:text-cyan-400 transition-colors truncate">
                               {project.title}
                             </div>
-                            <div className="text-xs text-slate-400 mt-1 max-w-xs truncate">
+                            <div className="text-xs text-slate-400 mt-1 truncate">
                               {project.description}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-300">{project.team}</div>
+                      <td className="px-6 py-4 h-20">
+                        <div className="text-sm text-slate-300 truncate">{project.team}</div>
                         <div className="text-xs text-slate-400">{project.teamMembers.length} members</div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {project.tech.slice(0, 3).map((tech, index) => (
-                            <span key={index} className="bg-cyan-900/50 text-cyan-200 px-2 py-1 rounded text-xs border border-cyan-800/50">
+                      <td className="px-6 py-4 h-20">
+                        <div className="flex flex-wrap gap-1">
+                          {project.tech.slice(0, 2).map((tech, index) => (
+                            <span key={index} className="bg-cyan-900/50 text-cyan-200 px-2 py-1 rounded text-xs border border-cyan-800/50 whitespace-nowrap">
                               {tech}
                             </span>
                           ))}
-                          {project.tech.length > 3 && (
-                            <span className="text-slate-400 text-xs px-2 py-1">+{project.tech.length - 3}</span>
+                          {project.tech.length > 2 && (
+                            <span className="text-slate-400 text-xs px-2 py-1 whitespace-nowrap">+{project.tech.length - 2}</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(project.status)}`}>
+                      <td className="px-6 py-4 h-20">
+                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(project.status)} whitespace-nowrap`}>
                           {project.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-300">{project.category}</div>
-                        <div className="text-xs text-slate-400">{project.priority} Priority</div>
+                      <td className="px-6 py-4 h-20">
+                        <div className="text-sm text-slate-300 truncate">{project.category}</div>
+                        <div className="text-xs text-slate-400 whitespace-nowrap">{project.priority} Priority</div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-300">
+                      <td className="px-6 py-4 h-20 text-sm text-slate-300 whitespace-nowrap">
                         {new Date(project.submitted).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">

@@ -14,8 +14,8 @@ const AdminPage = () => {
     if (!adminLoading && !userLoading) {
       if (!adminAuthenticated) {
         if (userAuthenticated) {
-          // User is logged in but not admin, redirect to main page
-          router.push('/');
+          // User is logged in but not admin, redirect to unauthorized page
+          router.push('/unauthorized');
         } else {
           // No one is logged in, redirect to auth page
           router.push('/');
@@ -47,7 +47,7 @@ const AdminPage = () => {
       totalProjects: 0
     };
     return (
-      <div className="p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 sm:p-6 lg:p-6">
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white">
@@ -87,7 +87,6 @@ const AdminPage = () => {
               </div>
             </div>
           </div>
-          {/* You can add more dashboard widgets here if needed */}
         </div>
       </div>
     );
