@@ -1,6 +1,5 @@
 "use client"
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { adminAPI } from '@/services/api';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 

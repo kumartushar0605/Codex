@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { eventAPI } from '@/services/api';
 import { 
   Calendar,
   Clock,
@@ -57,12 +58,9 @@ useEffect(() => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/event/events');
-      if (!response.ok) {
-        throw new Error('Failed to fetch events');
-      }
+      const response = await eventAPI.getAllEvents();
 
-      const { data: eventsArray } = await response.json(); // <-- fix here
+      const eventsArray = response.data; // <-- fix here
 
       const transformedEvents = {};
       const keys = [];

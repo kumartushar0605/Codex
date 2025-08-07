@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { eventAPI } from "@/services/api";
 import { Calendar, ArrowRight, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -14,10 +14,10 @@ export default function EventHomepage() {
  useEffect(() => {
   const fetchEvents = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/event/events");
-      console.log("API raw response:", response.data);
+      const response = await eventAPI.getAllEvents();
+      console.log("API raw response:", response);
 
-      const allEvents = response.data.data; // <-- FIX HERE
+      const allEvents = response.data; // <-- FIX HERE
 
       if (!Array.isArray(allEvents)) {
         throw new Error("Expected an array of events.");

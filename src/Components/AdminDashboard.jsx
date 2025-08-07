@@ -1,17 +1,13 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, Calendar, MessageSquare, Trophy, Settings, 
-  Plus, Edit, Trash2, Eye, UserCheck, UserX, 
-  Bell, Code, Award, BarChart3, Filter,
-  Search, ChevronDown, X, Check, LogOut
+import React from 'react';
+import {
+  Users, Calendar, MessageSquare, Trophy, Settings,
+  Bell, Code, BarChart3, LogOut
 } from 'lucide-react';
 import { useAdmin } from '@/context/AdminContext';
-import { eventAPI } from '@/services/api';
-import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 
-const AdminDashboard = ({ sidebarOnly }) => {
+const AdminDashboard = ({ sidebarOnly, onNavigate }) => {
   const { admin, logout } = useAdmin();
   const router = useRouter();
   const stats = {
@@ -53,7 +49,12 @@ const AdminDashboard = ({ sidebarOnly }) => {
           return (
             <button
               key={item.id}
-              onClick={() => item.route && router.push(item.route)}
+              onClick={() => {
+                if (item.route) {
+                  router.push(item.route);
+                  onNavigate?.(); // Close mobile menu after navigation
+                }
+              }}
               className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-300 font-medium rounded-xl mb-2 text-gray-300 hover:text-cyan-400 hover:bg-slate-800/50`}
             >
               <Icon className="h-5 w-5" />

@@ -1,7 +1,6 @@
 "use client"
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminDashboard from '@/Components/AdminDashboard';
 import { useAdmin } from '@/context/AdminContext';
 import { useUser } from '@/context/UserContext';
 import { Users, Calendar, Bell, Code } from 'lucide-react';
