@@ -34,7 +34,7 @@ export default function AdminLayout({ children }) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 lg:ml-64 pt-16 lg:pt-0">
+      <div className="flex-1  pt-16 lg:pt-0">
         {children}
       </div>
     </div>

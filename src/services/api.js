@@ -22,17 +22,17 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      window.location.href = '/auth';
-    }
-    return Promise.reject(error);
-  }
-);
+// // Response interceptor for error handling
+// api.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     if (error.response?.status === 401) {
+//       // Handle unauthorized access
+//       window.location.href = '/auth';
+//     }
+//     return Promise.reject(error);
+//   }
+// );
 
 // Admin API functions
 export const adminAPI = {

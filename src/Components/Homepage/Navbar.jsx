@@ -11,6 +11,8 @@ import {
 import { useUser } from '@/context/UserContext';
 import { useAdmin } from '@/context/AdminContext';
 import { useRouter } from 'next/navigation';
+            import Link from 'next/link'; // assuming you're using Next.js
+
 
 
   export default function Navbar() {
@@ -129,18 +131,29 @@ import { useRouter } from 'next/navigation';
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-2">
-              {[
-                { id: 'home', label: 'Home' },
-                { id: 'about', label: 'About' },
-                { id: 'events', label: 'Events' },
-                { id: 'announcements', label: 'Announcements' },
-                { id: 'contact', label: 'Contact' }
-              ].map((item) => (
-                <NavLink key={item.id} href={item.id} isActive={activeSection === item.id}>
-                  {item.label}
-                </NavLink>
-              ))}
+
+<div className="hidden md:flex items-center space-x-2">
+  {[
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'events', label: 'Events' },
+    { id: 'announcements', label: 'Announcements' },
+    { id: 'contact', label: 'Contact' },
+    { id: 'community', label: 'Community', isPage: true } // <- NEW
+  ].map((item) => (
+    item.isPage ? (
+      <Link key={item.id} href="/community">
+        <span className="px-4 py-2 cursor-pointer hover:text-blue-600 transition-colors">
+          {item.label}
+        </span>
+      </Link>
+    ) : (
+      <NavLink key={item.id} href={item.id} isActive={activeSection === item.id}>
+        {item.label}
+      </NavLink>
+    )
+  ))}
+
 
               {/* Auth/User Section */}
               <div className="ml-4 relative">
@@ -204,17 +217,31 @@ import { useRouter } from 'next/navigation';
           {isMenuOpen && (
             <div className="md:hidden py-4 px-2 bg-slate-800/95 backdrop-blur-xl rounded-b-xl">
               <div className="flex flex-col space-y-2">
-                {[
-                  { id: 'home', label: 'Home' },
-                  { id: 'about', label: 'About' },
-                  { id: 'events', label: 'Events' },
-                  { id: 'announcements', label: 'Announcements' },
-                  { id: 'contact', label: 'Contact' }
-                ].map((item) => (
-                  <NavLink key={item.id} href={item.id} isActive={activeSection === item.id}>
-                    {item.label}
-                  </NavLink>
-                ))}
+  {[
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'events', label: 'Events' },
+    { id: 'announcements', label: 'Announcements' },
+    { id: 'contact', label: 'Contact' },
+    { id: 'community', label: 'Community', isPage: true }
+  ].map((item) =>
+    item.isPage ? (
+      <Link key={item.id} href="/community">
+  <span className="block w-full text-center text-sm text-gray-300 hover:text-blue-500 transition-colors duration-200">
+    {item.label}
+  </span>
+</Link>
+
+    ) : (
+      <NavLink
+        key={item.id}
+        href={item.id}
+        isActive={activeSection === item.id}
+      >
+        {item.label}
+      </NavLink>
+    )
+  )}
 
                 {/* Mobile Auth Section */}
                 <div className="pt-2 border-t border-slate-700/50">

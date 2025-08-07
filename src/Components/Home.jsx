@@ -12,6 +12,7 @@ import Newsletter from "@/Components/Homepage/Newsletter";
 import Register from "@/Components/Homepage/Contact";
 import Navbar from "@/Components/Homepage/Navbar";
 import Contact from "@/Components/Homepage/Contact";
+import Community from "./Community";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
