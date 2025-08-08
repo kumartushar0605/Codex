@@ -152,18 +152,22 @@ useEffect(() => {
     setSubmitting(true);
     
     try {
-      const eventName = currentEvent?.title || selectedEvent;
-      const response = await fetch(`http://localhost:5000/api/sendevent?event=${encodeURIComponent(eventName)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          eventName: eventName,
-          eventType: currentEvent?.type
-        }),
-      });
+      const eventId = currentEvent?._id || selectedEvent?._id; // replace with your logic
+const eventName = currentEvent?.title || selectedEvent;
+
+const response = await fetch(`http://localhost:5000/api/v1/registers/registerUser/${eventId}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    
+  },
+  credentials: 'include', 
+  body: JSON.stringify({
+    ...formData,
+    eventName: eventName, // optional, not used in backend but okay to keep
+    eventType: currentEvent?.type // optional
+  }),
+});
 
       if (!response.ok) {
         throw new Error('Failed to submit registration');
@@ -562,7 +566,7 @@ useEffect(() => {
                       <Users size={20} className="mr-2 text-cyan-400" />
                       Team Information
                     </h4>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Team Name</label>
                         <input
@@ -640,21 +644,8 @@ useEffect(() => {
                         <option value="xxl">XXL</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Dietary Restrictions</label>
-                      <select
-                        name="dietary"
-                        value={formData.dietary}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
-                      >
-                        <option value="">No Restrictions</option>
-                        <option value="vegetarian">Vegetarian</option>
-                        <option value="vegan">Vegan</option>
-                        <option value="gluten-free">Gluten Free</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
+                    
+                      
                   </div>
                   
                   <div className="mt-4">
