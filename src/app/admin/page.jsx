@@ -15,7 +15,7 @@ const AdminPage = () => {
       if (!adminAuthenticated) {
         if (userAuthenticated) {
           // User is logged in but not admin, redirect to unauthorized page
-          router.push('/unauthorized');
+          router.push('/');
         } else {
           // No one is logged in, redirect to auth page
           router.push('/');
