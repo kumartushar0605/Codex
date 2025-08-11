@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { eventAPI } from '@/services/api';
-import { Calendar, Plus, Trash2, Edit, Eye } from 'lucide-react';
+import { eventAPI, registrationAPI } from '@/services/api';
+import { Calendar, Plus, Trash2, Edit, Eye, Users, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const EventsPage = () => {
@@ -9,6 +9,15 @@ const EventsPage = () => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  
+  // Teams related state
+  const [showTeamsModal, setShowTeamsModal] = useState(false);
+  const [showTeamDetailsModal, setShowTeamDetailsModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEventTitle, setSelectedEventTitle] = useState('');
+  const [teams, setTeams] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [teamsLoading, setTeamsLoading] = useState(false);
   const [eventFormData, setEventFormData] = useState({
     title: '',
     subtitle: '',
@@ -196,6 +205,42 @@ const EventsPage = () => {
         toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
       }
     }
+  };
+
+  // Teams related functions
+  const handleViewTeams = async (eventId, eventTitle) => {
+    setSelectedEventId(eventId);
+    setSelectedEventTitle(eventTitle);
+    setShowTeamsModal(true);
+    setTeamsLoading(true);
+    
+    try {
+      const response = await registrationAPI.getEventRegistrations(eventId);
+      setTeams(response.data || []);
+    } catch (error) {
+      console.error("❌ Error fetching teams:", error);
+      toast.error("Failed to fetch teams. Please try again.");
+      setTeams([]);
+    } finally {
+      setTeamsLoading(false);
+    }
+  };
+
+  const handleViewTeamDetails = (team) => {
+    setSelectedTeam(team);
+    setShowTeamDetailsModal(true);
+  };
+
+  const closeTeamsModal = () => {
+    setShowTeamsModal(false);
+    setSelectedEventId(null);
+    setSelectedEventTitle('');
+    setTeams([]);
+  };
+
+  const closeTeamDetailsModal = () => {
+    setShowTeamDetailsModal(false);
+    setSelectedTeam(null);
   };
 
   const handleUpdateEvent = async (e) => {
@@ -759,6 +804,13 @@ const EventsPage = () => {
                     <Eye className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">View</span>
                   </button>
                   <button
+                    className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-violet-600 hover:to-purple-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    onClick={() => handleViewTeams(event._id, event.title)}
+                    title="View participating teams"
+                  >
+                    <Users className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Teams</span>
+                  </button>
+                  <button
                     className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-emerald-600 hover:to-green-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
                     onClick={() => openEditModal(event)}
                     title="Edit event"
@@ -778,6 +830,285 @@ const EventsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Teams Modal */}
+      {showTeamsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-black text-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative animate-fadeIn max-h-[90vh] overflow-y-auto border border-slate-700/50">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-700/50">
+              <div className="flex-1 pr-4">
+                <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text">
+                  Teams Participating
+                </h2>
+                <p className="text-slate-400 text-sm mt-1">
+                  Event: {selectedEventTitle}
+                </p>
+              </div>
+              <button
+                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0"
+                onClick={closeTeamsModal}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Teams Content */}
+            <div className="space-y-4">
+              {teamsLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></span>
+                  <span className="ml-4 text-purple-300 font-semibold">Loading teams...</span>
+                </div>
+              ) : teams.length === 0 ? (
+                <div className="text-center text-slate-400 py-16">
+                  <Users className="mx-auto mb-4 w-12 h-12 text-purple-700/40" />
+                  <p className="text-lg">No teams registered for this event yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {teams.map((team, index) => (
+                    <div
+                      key={team._id || index}
+                      className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 hover:border-purple-500/50 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                      onClick={() => handleViewTeamDetails(team)}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-purple-300">
+                          {team.teamName || 'Individual Participant'}
+                        </h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          team.status === 'confirmed' ? 'bg-green-800 text-green-200' :
+                          team.status === 'registered' ? 'bg-blue-800 text-blue-200' :
+                          team.status === 'cancelled' ? 'bg-red-800 text-red-200' :
+                          'bg-yellow-800 text-yellow-200'
+                        }`}>
+                          {team.status}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <p className="text-slate-300">
+                          <span className="font-medium">Leader:</span> {team.userId?.fullName || 'N/A'}
+                        </p>
+                        <p className="text-slate-300">
+                          <span className="font-medium">Team Size:</span> {team.teamSize || 1}
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          Registered: {new Date(team.registrationDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-slate-700/50">
+                        <p className="text-xs text-purple-400 hover:text-purple-300">
+                          Click to view details →
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Details Modal */}
+      {showTeamDetailsModal && selectedTeam && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-black text-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 relative animate-fadeIn max-h-[90vh] overflow-y-auto border border-slate-700/50">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-700/50">
+              <div className="flex-1 pr-4">
+                <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text">
+                  {selectedTeam.teamName || 'Individual Participant'}
+                </h2>
+                <p className="text-slate-400 text-sm mt-1">
+                  Team Details
+                </p>
+              </div>
+              <button
+                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0"
+                onClick={closeTeamDetailsModal}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Team Details Content */}
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Team Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Team Name</label>
+                      <p className="text-white">{selectedTeam.teamName || 'Individual'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Team Size</label>
+                      <p className="text-white">{selectedTeam.teamSize || 1}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Status</label>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedTeam.status === 'confirmed' ? 'bg-green-800 text-green-200' :
+                        selectedTeam.status === 'registered' ? 'bg-blue-800 text-blue-200' :
+                        selectedTeam.status === 'cancelled' ? 'bg-red-800 text-red-200' :
+                        'bg-yellow-800 text-yellow-200'
+                      }`}>
+                        {selectedTeam.status}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Registration Date</label>
+                      <p className="text-white">{new Date(selectedTeam.registrationDate).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Contact Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Team Leader</label>
+                      <p className="text-white">{selectedTeam.userId?.fullName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Email</label>
+                      <p className="text-white">{selectedTeam.userId?.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Phone</label>
+                      <p className="text-white">{selectedTeam.userId?.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Registration Number</label>
+                      <p className="text-white">{selectedTeam.userId?.regNumber || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Info */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                  Academic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400">Branch</label>
+                    <p className="text-white">{selectedTeam.branch || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400">Year</label>
+                    <p className="text-white">{selectedTeam.year || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills and Links */}
+              {(selectedTeam.skills?.length > 0 || selectedTeam.githubLink || selectedTeam.linkedInLink) && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Skills & Links
+                  </h3>
+                  
+                  {selectedTeam.skills?.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400 mb-2">Skills</label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTeam.skills.map((skill, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-purple-800/30 text-purple-200 rounded-full text-sm border border-purple-700/50"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTeam.githubLink && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">GitHub</label>
+                        <a
+                          href={selectedTeam.githubLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline break-all"
+                        >
+                          {selectedTeam.githubLink}
+                        </a>
+                      </div>
+                    )}
+                    {selectedTeam.linkedInLink && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">LinkedIn</label>
+                        <a
+                          href={selectedTeam.linkedInLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline break-all"
+                        >
+                          {selectedTeam.linkedInLink}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Info */}
+              {(selectedTeam.expectations || selectedTeam.description || selectedTeam.tshirtSize || selectedTeam.dietary) && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Additional Information
+                  </h3>
+                  
+                  {selectedTeam.expectations && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Expectations</label>
+                      <p className="text-white">{selectedTeam.expectations}</p>
+                    </div>
+                  )}
+                  
+                  {selectedTeam.description && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Description</label>
+                      <p className="text-white">{selectedTeam.description}</p>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTeam.tshirtSize && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">T-Shirt Size</label>
+                        <p className="text-white">{selectedTeam.tshirtSize}</p>
+                      </div>
+                    )}
+                    {selectedTeam.dietary && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">Dietary Requirements</label>
+                        <p className="text-white">{selectedTeam.dietary}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
