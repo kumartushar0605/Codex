@@ -209,4 +209,99 @@ export const managedUserAPI = {
   },
 };
 
+// Project API functions
+export const projectAPI = {
+  // Get all projects
+  getAllProjects: async () => {
+    const response = await api.get('/api/v1/projects');
+    return response.data;
+  },
+
+  // Get single project by ID
+  getProjectById: async (id) => {
+    const response = await api.get(`/api/v1/projects/${id}`);
+    return response.data;
+  },
+
+  // Add new project with files
+  addProjectWithFiles: async (formData) => {
+    const response = await api.post('/api/v1/projects', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Add new project (existing function for backward compatibility)
+  addProject: async (projectData) => {
+    // Map frontend fields to backend expected fields and validate
+    const payload = {
+      title: projectData.title,
+      description: projectData.description,
+      techStack: projectData.techStack || ["Other"], // Use actual tech stack from form
+      liveLink: projectData.liveLink,
+      repoLink: projectData.githubLink,
+      images: [],
+      videoLink: projectData.videoLink || ""
+    };
+    // Basic validation (backend will also validate)
+    if (!payload.title || payload.title.length < 3 || payload.title.length > 100) {
+      throw new Error("Title must be 3-100 characters");
+    }
+    if (!payload.description || payload.description.length < 10 || payload.description.length > 500) {
+      throw new Error("Description must be 10-500 characters");
+    }
+    if (!payload.techStack || payload.techStack.length === 0) {
+      throw new Error("At least one technology is required");
+    }
+    if (payload.liveLink && !/^https?:\/\/.+/.test(payload.liveLink)) {
+      throw new Error("Invalid live link URL");
+    }
+    if (payload.repoLink && !/^https?:\/\/.+/.test(payload.repoLink)) {
+      throw new Error("Invalid GitHub link URL");
+    }
+    if (payload.videoLink && !/^https?:\/\/.+/.test(payload.videoLink)) {
+      throw new Error("Invalid video link URL");
+    }
+    const response = await api.post('/api/v1/projects', payload);
+    return response.data;
+  },
+
+  // Update project by ID
+  updateProject: async (id, projectData) => {
+    // Map frontend fields to backend expected fields and validate
+    const payload = {
+      title: projectData.title,
+      description: projectData.description,
+      techStack: projectData.techStack || ["Other"],
+      liveLink: projectData.liveLink,
+      repoLink: projectData.githubLink || projectData.repoLink,
+      images: projectData.images || [],
+      videoLink: projectData.videoLink || ""
+    };
+    // Basic validation
+    if (payload.title && (payload.title.length < 3 || payload.title.length > 100)) {
+      throw new Error("Title must be 3-100 characters");
+    }
+    if (payload.description && (payload.description.length < 10 || payload.description.length > 500)) {
+      throw new Error("Description must be 10-500 characters");
+    }
+    if (payload.liveLink && !/^https?:\/\/.+/.test(payload.liveLink)) {
+      throw new Error("Invalid live link URL");
+    }
+    if (payload.repoLink && !/^https?:\/\/.+/.test(payload.repoLink)) {
+      throw new Error("Invalid repository link URL");
+    }
+    const response = await api.put(`/api/v1/projects/${id}`, payload);
+    return response.data;
+  },
+
+  // Delete project by ID
+  deleteProject: async (id) => {
+    const response = await api.delete(`/api/v1/projects/${id}`);
+    return response.data;
+  },
+};
+
 export default api;

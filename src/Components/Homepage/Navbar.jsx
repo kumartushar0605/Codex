@@ -139,10 +139,11 @@ import { useRouter } from 'next/navigation';
     { id: 'events', label: 'Events' },
     { id: 'announcements', label: 'Announcements' },
     { id: 'contact', label: 'Contact' },
+    { id: 'projects', label: 'Projects', isPage: true },
     { id: 'community', label: 'Community', isPage: true } // <- NEW
   ].map((item) => (
     item.isPage ? (
-      <Link key={item.id} href="/community">
+      <Link key={item.id} href={item.id === 'community' ? '/community' : `/${item.id}`}>
         <span className="px-4 py-2 cursor-pointer hover:text-blue-600 transition-colors">
           {item.label}
         </span>
@@ -223,10 +224,11 @@ import { useRouter } from 'next/navigation';
     { id: 'events', label: 'Events' },
     { id: 'announcements', label: 'Announcements' },
     { id: 'contact', label: 'Contact' },
+    { id: 'projects', label: 'Projects', isPage: true },
     { id: 'community', label: 'Community', isPage: true }
   ].map((item) =>
     item.isPage ? (
-      <Link key={item.id} href="/community">
+      <Link key={item.id} href={item.id === 'community' ? '/community' : `/${item.id}`}>
   <span className="block w-full text-center text-sm text-gray-300 hover:text-blue-500 transition-colors duration-200">
     {item.label}
   </span>
