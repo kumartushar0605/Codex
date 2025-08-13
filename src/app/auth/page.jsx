@@ -166,21 +166,13 @@ const AuthPage = () => {
   };
 
   try {
-    const res = await fetch('http://localhost:5000/api/v1/users/signUp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await res.json();
-
-    if (res.ok && result.success) {
+    const result = await userSignup(payload);
+    
+    if (result.success) {
       toast.success('Registration successful!');
       router.push('/');
     } else {
-      toast.error(result.message || 'Registration failed');
+      toast.error(result.error || 'Registration failed');
     }
   } catch (error) {
     console.error(error);

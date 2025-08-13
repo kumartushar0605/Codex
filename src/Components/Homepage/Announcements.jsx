@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { announcementAPI } from "@/services/api";
 
 export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
@@ -8,13 +9,10 @@ export default function Announcements() {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/v1/announcements/");
-        if (!response.ok) {
-          throw new Error("Failed to fetch announcements");
-        }
-        const data = await response.json();
-        setAnnouncements(data.data || []);
+        const response = await announcementAPI.getAllAnnouncements();
+        setAnnouncements(response.data || []);
       } catch (err) {
+        console.error("Error fetching announcements:", err);
         setError(err.message);
       } finally {
         setLoading(false);
