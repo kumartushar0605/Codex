@@ -9,12 +9,52 @@ const api = axios.create({
   },
 });
 
-
-
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
   (config) => {
-    // You can add auth headers here if needed
+    // Log the request for debugging
+    console.log('Making request to:', config.url);
+    console.log('With credentials:', config.withCredentials);
+    console.log('All cookies:', document.cookie);
+    
+    // Try to get the accessToken from cookies manually
+    const cookies = document.cookie.split(';');
+    const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
+    
+    let tokenFound = false;
+    
+    if (accessTokenCookie) {
+      const token = accessTokenCookie.split('=')[1];
+      console.log('Found accessToken in cookies:', token ? 'Yes' : 'No');
+      
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log('Added Authorization header from cookies');
+        tokenFound = true;
+      }
+    }
+    
+    // If no cookie token, try localStorage as fallback
+    if (!tokenFound) {
+      const localToken = localStorage.getItem('accessToken');
+      if (localToken && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${localToken}`;
+        console.log('Added Authorization header from localStorage');
+        tokenFound = true;
+      }
+    }
+    
+    // As a last resort for development, add userId as a custom header
+    if (!tokenFound) {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        config.headers['X-User-ID'] = userId;
+        console.log('Added X-User-ID header as fallback:', userId);
+      } else {
+        console.log('No authentication data found');
+      }
+    }
+    
     return config;
   },
   (error) => {
@@ -22,17 +62,23 @@ api.interceptors.request.use(
   }
 );
 
-// // Response interceptor for error handling
-// api.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response?.status === 401) {
-//       // Handle unauthorized access
-//       window.location.href = '/auth';
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response received:', response.status);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error.response?.status, error.response?.data);
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      console.log('Unauthorized - redirecting to login');
+      // Optionally redirect to login page
+      // window.location.href = '/auth';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Admin API functions
 export const adminAPI = {
@@ -99,7 +145,34 @@ export const userAPI = {
 
   // Login user
   login: async (regNumber, password) => {
+    console.log('Login API called with:', { regNumber, password: '***' });
     const response = await api.post('/api/v1/users/login', { regNumber, password });
+    
+    // Log the response to see what we get
+    console.log('Full login response object:', response);
+    console.log('Login response data:', response.data);
+    console.log('User object from response:', response.data.user);
+    console.log('User object keys:', response.data.user ? Object.keys(response.data.user) : 'user is undefined');
+    console.log('User ID from response:', response.data.user?._id);
+    console.log('Login response headers:', response.headers);
+    console.log('Cookies after login:', document.cookie);
+    
+    // Since the backend sets cookies but they're not accessible due to CORS,
+    // we need to manually handle the authentication
+    if (response.data && response.data.user) {
+      // Store user data
+      localStorage.setItem('userInfo', JSON.stringify(response.data.user));
+      
+      // Try different possible ID field names
+      const userId = response.data.user._id || response.data.user.id || response.data.user.userId;
+      if (userId) {
+        localStorage.setItem('userId', userId);
+        console.log('Stored user ID for authentication:', userId);
+      } else {
+        console.error('No user ID found in response. User object:', response.data.user);
+      }
+    }
+    
     return response.data;
   },
 
@@ -112,6 +185,13 @@ export const userAPI = {
   // Logout user
   logout: async () => {
     const response = await api.post('/api/v1/users/logout');
+    
+    // Clear stored tokens and user data
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('userId');
+    console.log('Cleared all stored authentication data');
+    
     return response.data;
   },
 };
@@ -120,6 +200,19 @@ export const userAPI = {
 export const registrationAPI = {
   // Register user for event
   registerForEvent: async (eventId, userData) => {
+    console.log('Registration API called with:');
+    console.log('Event ID:', eventId);
+    console.log('User Data:', userData);
+    console.log('Cookies before request:', document.cookie);
+    
+    // Since cookies aren't working in development, include user ID in the request body
+    // as a workaround for the authentication issue
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      userData.userId = userId; // Add userId to request body as backup
+      console.log('Added userId to request body:', userId);
+    }
+    
     const response = await api.post(`/api/v1/registers/registerUser/${eventId}`, userData);
     return response.data;
   },
