@@ -7,9 +7,9 @@ export function middleware(request) {
     // Check for admin query parameter (will be set by client-side)
     const adminCheck = request.nextUrl.searchParams.get('admin');
     
-    // If no admin parameter, redirect to homepage
+    // If no admin parameter, redirect to unauthorized page
     if (!adminCheck) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
 

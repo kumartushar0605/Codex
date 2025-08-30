@@ -13,18 +13,20 @@ const UnauthorizedPage = () => {
 
       <div className="flex items-center justify-center min-h-screen px-4 sm:px-6 lg:px-8 pt-16">
         <div className="max-w-lg w-full text-center">
-          {/* 404 Text */}
-          <div className="text-8xl sm:text-9xl font-extrabold text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text mb-8">
-            404
+          {/* Unauthorized Icon */}
+          <div className="flex justify-center mb-8">
+            <div className="w-24 h-24 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-12 h-12 text-white" />
+            </div>
           </div>
 
           {/* Error Message */}
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Page Not Found
+            Access Denied
           </h1>
 
           <p className="text-lg text-slate-300 mb-8">
-            The page you're looking for doesn't exist or you don't have permission to access it.
+            You don't have permission to access this page. Please sign in with appropriate credentials.
           </p>
 
           {/* Action Buttons */}
@@ -38,8 +40,16 @@ const UnauthorizedPage = () => {
             </button>
 
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/auth')}
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              <Home className="w-5 h-5" />
+              Sign In
+            </button>
+
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center justify-center gap-2 bg-slate-600/50 hover:bg-slate-500/50 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 border border-slate-500/50 hover:border-slate-400/50"
             >
               <Home className="w-5 h-5" />
               Go Home

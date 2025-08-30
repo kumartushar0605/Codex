@@ -88,7 +88,7 @@ const ProjectsPage = () => {
   // Admin authentication check
   useEffect(() => {
     if (!adminLoading && !adminAuthenticated) {
-      router.push('/');
+      router.push('/unauthorized');
     }
   }, [adminAuthenticated, adminLoading, router]);
 

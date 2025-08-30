@@ -118,7 +118,7 @@ import Link from 'next/link';
     return (
       <button
         onClick={handleClick}
-        className={`${isMobile ? 'block w-full text-center text-sm' : 'px-4 py-2 rounded-lg'} transition-all duration-300 font-medium ${isActive
+        className={`${isMobile ? 'block w-full text-center text-sm' : 'px-4 py-2 rounded-lg'} transition-all duration-300 font-medium cursor-pointer ${isActive
           ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25'
           : 'text-gray-300 hover:text-cyan-400 hover:bg-slate-800/50'
           }`}
@@ -131,10 +131,10 @@ import Link from 'next/link';
   const handleLogout = async () => {
     if (adminAuthenticated) {
       await adminLogout();
-      router.push('/auth');
+      router.push('/');
     } else if (userAuthenticated) {
       await userLogout();
-      router.push('/auth');
+      router.push('/');
     }
   };
 
@@ -198,14 +198,14 @@ import Link from 'next/link';
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => router.push('/admin')}
-                      className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all"
+                      className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all cursor-pointer"
                     >
                       <Code className="h-4 w-4" />
                       <span className="text-sm font-medium">Admin</span>
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                      className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
                       <span className="text-sm">Logout</span>
@@ -223,7 +223,7 @@ import Link from 'next/link';
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                      className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
                       <span className="text-sm">Logout</span>
@@ -232,7 +232,7 @@ import Link from 'next/link';
                 ) : (
                   <button
                     onClick={handleAuthClick}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-lg transition-all"
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:shadow-lg transition-all cursor-pointer"
                   >
                     <User className="h-4 w-4" />
                     <span className="text-sm font-medium">Sign In</span>
@@ -244,7 +244,7 @@ import Link from 'next/link';
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors"
+              className="md:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -265,7 +265,7 @@ import Link from 'next/link';
   ].map((item) =>
     item.isPage ? (
       <Link key={item.id} href={item.id === 'community' ? '/community' : `/${item.id}`}>
-  <span className="block w-full text-center text-sm text-gray-300 hover:text-blue-500 transition-colors duration-200">
+  <span className="block w-full text-center text-sm text-gray-300 hover:text-blue-500 transition-colors duration-200 cursor-pointer">
     {item.label}
   </span>
 </Link>
@@ -291,7 +291,7 @@ import Link from 'next/link';
                           router.push('/admin');
                           setIsMenuOpen(false);
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg"
+                        className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg cursor-pointer"
                       >
                         <Code className="h-4 w-4" />
                         <span className="text-sm font-medium">Admin Panel</span>
@@ -301,7 +301,7 @@ import Link from 'next/link';
                           handleLogout();
                           setIsMenuOpen(false);
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg"
+                        className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg cursor-pointer"
                       >
                         <LogOut className="h-4 w-4" />
                         <span className="text-sm">Logout</span>
@@ -322,7 +322,7 @@ import Link from 'next/link';
                           handleLogout();
                           setIsMenuOpen(false);
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg"
+                        className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg cursor-pointer"
                       >
                         <LogOut className="h-4 w-4" />
                         <span className="text-sm">Logout</span>
@@ -334,7 +334,7 @@ import Link from 'next/link';
                         handleAuthClick();
                         setIsMenuOpen(false);
                       }}
-                      className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg"
+                      className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg cursor-pointer"
                     >
                       <User className="h-4 w-4" />
                       <span className="text-sm font-medium">Sign In</span>
