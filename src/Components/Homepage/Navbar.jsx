@@ -10,8 +10,8 @@ import {
   } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
 import { useAdmin } from '@/context/AdminContext';
-import { useRouter } from 'next/navigation';
-            import Link from 'next/link'; // assuming you're using Next.js
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 
 
@@ -22,6 +22,10 @@ import { useRouter } from 'next/navigation';
     const { user, logout: userLogout, isAuthenticated: userAuthenticated } = useUser();
     const { admin, logout: adminLogout, isAuthenticated: adminAuthenticated } = useAdmin();
     const router = useRouter();
+    const pathname = usePathname();
+
+    // Check if we're on the homepage
+    const isHomepage = pathname === '/' || pathname === '/home';
 
   // Scroll to section with offset for fixed navbar
   const scrollToSection = (sectionId) => {
@@ -77,23 +81,52 @@ import { useRouter } from 'next/navigation';
     };
   }, []);
 
+  // Handle hash navigation when coming from other pages
+  useEffect(() => {
+    if (isHomepage && typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && ['home', 'about', 'events', 'announcements', 'register', 'contact'].includes(hash)) {
+        // Small delay to ensure the page is fully loaded
+        setTimeout(() => {
+          scrollToSection(hash);
+        }, 100);
+      }
+    }
+  }, [isHomepage]);
 
 
 
 
 
 
-  const NavLink = ({ href, children, isActive }) => (
-    <button
-      onClick={() => scrollToSection(href)}
-      className={`px-4 py-2 rounded-lg transition-all duration-300 font-medium ${isActive
-        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25'
-        : 'text-gray-300 hover:text-cyan-400 hover:bg-slate-800/50'
-        }`}
-    >
-      {children}
-    </button>
-  );
+
+  const NavLink = ({ href, children, isActive, isMobile = false }) => {
+    const handleClick = () => {
+      if (isHomepage) {
+        // If on homepage, scroll to section
+        scrollToSection(href);
+      } else {
+        // If on other pages, navigate to homepage with section hash
+        router.push(`/#${href}`);
+      }
+      // Close mobile menu if open
+      if (isMobile) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    return (
+      <button
+        onClick={handleClick}
+        className={`${isMobile ? 'block w-full text-center text-sm' : 'px-4 py-2 rounded-lg'} transition-all duration-300 font-medium ${isActive
+          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/25'
+          : 'text-gray-300 hover:text-cyan-400 hover:bg-slate-800/50'
+          }`}
+      >
+        {children}
+      </button>
+    );
+  };
 
   const handleLogout = async () => {
     if (adminAuthenticated) {
@@ -115,7 +148,10 @@ import { useRouter } from 'next/navigation';
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center space-x-3">
+            <div 
+              className="flex items-center space-x-3 cursor-pointer"
+              onClick={() => router.push('/')}
+            >
               <div className="relative">
                 <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-pink-500/25">
                   <span className="text-white font-black text-lg">C</span>
@@ -239,6 +275,7 @@ import { useRouter } from 'next/navigation';
         key={item.id}
         href={item.id}
         isActive={activeSection === item.id}
+        isMobile={true}
       >
         {item.label}
       </NavLink>

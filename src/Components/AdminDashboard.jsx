@@ -55,7 +55,7 @@ const AdminDashboard = ({ sidebarOnly, onNavigate }) => {
                   onNavigate?.(); // Close mobile menu after navigation
                 }
               }}
-              className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-300 font-medium rounded-xl mb-2 text-gray-300 hover:text-cyan-400 hover:bg-slate-800/50`}
+              className={`w-full flex items-center space-x-3 px-6 py-3 text-left transition-all duration-300 font-medium rounded-xl mb-2 text-gray-300 hover:text-cyan-400 hover:bg-slate-800/50 cursor-pointer`}
             >
               <Icon className="h-5 w-5" />
               <span>{item.label}</span>
@@ -82,7 +82,7 @@ const AdminDashboard = ({ sidebarOnly, onNavigate }) => {
         </div>
         <button
           onClick={logout}
-          className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors w-full"
+          className="flex items-center space-x-2 px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors w-full cursor-pointer"
         >
           <LogOut className="h-4 w-4" />
           <span className="text-sm">Logout</span>

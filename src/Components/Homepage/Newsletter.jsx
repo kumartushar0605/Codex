@@ -1,4 +1,27 @@
+"use client"
+import { useState } from 'react';
+import { Mail, Send } from 'lucide-react';
+
 export default function Newsletter() {
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!email) return;
+        
+        setSubmitting(true);
+        // Handle newsletter subscription here
+        console.log('Newsletter subscription:', email);
+        
+        // Simulate API call
+        setTimeout(() => {
+            setSubmitting(false);
+            setEmail('');
+            // You can add toast notification here
+        }, 1000);
+    };
+
     return (
         <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-800/20">
         <div className="max-w-4xl mx-auto text-center">
@@ -12,16 +35,33 @@ export default function Newsletter() {
               Stay updated with the latest events, announcements, and opportunities from Codex
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 className="flex-1 px-6 py-4 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                required
               />
-              <button className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300">
-                Subscribe
+              <button 
+                type="submit"
+                disabled={submitting}
+                className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    <span>Subscribing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={18} />
+                    <span>Subscribe</span>
+                  </>
+                )}
               </button>
-            </div>
+            </form>
           </div>
         </div>
       </section>

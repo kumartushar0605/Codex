@@ -11,7 +11,26 @@ import {
     ArrowRight,
     Play,
   } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 export default function Hero(){
+    const router = useRouter();
+
+    // Scroll to section with offset for fixed navbar
+    const scrollToSection = (sectionId) => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const navbarHeight = 64; // Height of the fixed navbar
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    };
+
     return(
         <section id="home" className="min-h-screen flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-16">
         <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center">
@@ -32,17 +51,19 @@ export default function Hero(){
             {/* Social Links */}
             <div className="flex items-center space-x-4">
               {[
-                { icon: Github, href: '#', label: 'GitHub' },
-                { icon: Instagram, href: '#', label: 'Instagram' },
-                { icon: Linkedin, href: '#', label: 'LinkedIn' },
-                { icon: Youtube, href: '#', label: 'YouTube' },
-                { icon: Facebook, href: '#', label: 'Facebook' },
-                { icon: Twitter, href: '#', label: 'Twitter' }
+                { icon: Github, href: 'https://github.com/codex-iter', label: 'GitHub' },
+                { icon: Instagram, href: 'https://instagram.com/codex_iter', label: 'Instagram' },
+                { icon: Linkedin, href: 'https://linkedin.com/company/codex-iter', label: 'LinkedIn' },
+                { icon: Youtube, href: 'https://youtube.com/@codex-iter', label: 'YouTube' },
+                { icon: Facebook, href: 'https://facebook.com/codex.iter', label: 'Facebook' },
+                { icon: Twitter, href: 'https://twitter.com/codex_iter', label: 'Twitter' }
               ].map((social, index) => (
                 <a
                   key={index}
                   href={social.href}
-                  className="p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 group"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 group cursor-pointer"
                   aria-label={social.label}
                 >
                   <social.icon size={20} className="text-gray-400 group-hover:text-cyan-400 transition-colors" />
@@ -54,15 +75,17 @@ export default function Hero(){
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => scrollToSection('register')}
-                className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center space-x-2 group"
+                className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl font-semibold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center space-x-2 group cursor-pointer"
               >
                 <span>Join Our Community</span>
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
               
               <a
-                href="#"
-                className="px-8 py-4 bg-slate-800/50 border border-slate-700/50 rounded-xl font-semibold text-white hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 flex items-center justify-center space-x-2"
+                href="https://github.com/codex-iter"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-slate-800/50 border border-slate-700/50 rounded-xl font-semibold text-white hover:bg-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 flex items-center justify-center space-x-2 cursor-pointer"
               >
                 <Github size={20} />
                 <span>Visit GitHub</span>

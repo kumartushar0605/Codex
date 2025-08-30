@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import { adminAPI } from '@/services/api';
 
 const AdminContext = createContext();
 
@@ -18,40 +19,79 @@ export const AdminProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Check if admin is logged in on mount
+  // Check if admin is logged in on mount and verify with backend
   useEffect(() => {
-    const adminInfo = localStorage.getItem('adminInfo');
-    if (adminInfo) {
-      try {
-        setAdmin(JSON.parse(adminInfo));
-      } catch (error) {
-        console.error('Error parsing admin info:', error);
-        localStorage.removeItem('adminInfo');
+    const checkAdminAuth = async () => {
+      const adminInfo = localStorage.getItem('adminInfo');
+      if (adminInfo) {
+        try {
+          const adminData = JSON.parse(adminInfo);
+          setAdmin(adminData);
+          
+          // Verify with backend
+          const sessionResponse = await adminAPI.verifySession();
+          if (!sessionResponse.success) {
+            // Backend verification failed, clear local data
+            setAdmin(null);
+            localStorage.removeItem('adminInfo');
+            toast.error('Session expired. Please login again.');
+          }
+        } catch (error) {
+          console.error('Error checking admin auth:', error);
+          setAdmin(null);
+          localStorage.removeItem('adminInfo');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    checkAdminAuth();
   }, []);
 
-    const login = async (regNumber, password) => {
-   const ADMIN_USER = process.env.NEXT_PUBLIC_ADMIN_USER || 'CodexMaster04';
-  const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASS || 'codexbhai';
-
-  if (regNumber === ADMIN_USER && password === ADMIN_PASS) {
-    const adminData = { regNumber, role: 'admin' };
-    setAdmin(adminData);
-    localStorage.setItem('adminInfo', JSON.stringify(adminData));
-    return { success: true };
-  } else {
-    return { success: false, error: 'Invalid admin credentials' };
-  }
+  const login = async (regNumber, password) => {
+    try {
+      // This will check frontend credentials first, then authenticate with backend
+      const response = await adminAPI.login(regNumber, password);
+      
+      if (response.success) {
+        const adminData = { 
+          regNumber, 
+          role: 'admin',
+          ...response.user // Include backend user data
+        };
+        setAdmin(adminData);
+        localStorage.setItem('adminInfo', JSON.stringify(adminData));
+        toast.success('Admin login successful!');
+        return { success: true };
+      } else {
+        // If backend authentication fails, show helpful error message
+        if (response.error && response.error.includes('database')) {
+          toast.error('Admin user not found in database');
+        } else {
+          toast.error(response.error || 'Login failed');
+        }
+        return { success: false, error: response.error };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Login failed. Please try again.');
+      return { success: false, error: 'Login failed' };
+    }
   };
 
   const logout = async () => {
-      setAdmin(null);
-      localStorage.removeItem('adminInfo');
-      toast.success('Logged out successfully');
-      // Navigate to homepage after logout
-      router.push('/');
+    try {
+      // Call backend logout to clear cookies
+      await adminAPI.logout();
+    } catch (error) {
+      console.error('Backend logout error:', error);
+    }
+    
+    // Clear frontend state
+    setAdmin(null);
+    localStorage.removeItem('adminInfo');
+    toast.success('Logged out successfully');
+    router.push('/');
   };
 
   // Function to navigate to admin routes with proper authentication

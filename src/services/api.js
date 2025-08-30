@@ -82,22 +82,57 @@ api.interceptors.response.use(
 
 // Admin API functions
 export const adminAPI = {
-  // Login admin
+  // Login admin - first check frontend, then backend
   login: async (regNumber, password) => {
-    const response = await api.post('/api/v1/users/login', { regNumber, password });
-    return response.data;
+    // First, check frontend credentials
+    const ADMIN_USER = process.env.NEXT_PUBLIC_ADMIN_USER || 'ADMIN001';
+    const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASS || 'admin123';
+
+    if (regNumber !== ADMIN_USER || password !== ADMIN_PASS) {
+      return { success: false, error: 'Invalid admin credentials' };
+    }
+
+    // If frontend validation passes, authenticate with backend
+    // We'll use the admin credentials to login through the user endpoint
+    try {
+      const response = await api.post('/api/v1/users/login', { 
+        regNumber: ADMIN_USER, 
+        password: ADMIN_PASS 
+      });
+      
+      // Check if the user has admin role
+      if (response.data.success && response.data.user && response.data.user.role === 'admin') {
+        return response.data;
+      } else {
+        return { success: false, error: 'Admin access not granted' };
+      }
+    } catch (error) {
+      console.error('Backend authentication failed:', error);
+      return { success: false, error: 'Backend authentication failed. Please ensure admin user exists in database.' };
+    }
   },
 
   // Logout admin
   logout: async () => {
-    const response = await api.post('/api/v1/users/logout');
-    return response.data;
+    try {
+      const response = await api.post('/api/v1/users/logout');
+      return response.data;
+    } catch (error) {
+      console.error('Logout error:', error);
+      return { success: false, error: 'Logout failed' };
+    }
   },
 
-  // Signup admin (if needed)
-  signup: async (adminData) => {
-    const response = await api.post('/api/v1/users/signUp', adminData);
-    return response.data;
+  // Verify admin session (we'll use a protected endpoint to verify session)
+  verifySession: async () => {
+    try {
+      // Try to access a protected endpoint to verify session
+      const response = await api.get('/api/v1/announcements');
+      return { success: true };
+    } catch (error) {
+      console.error('Session verification error:', error);
+      return { success: false, error: 'Session verification failed' };
+    }
   },
 };
 

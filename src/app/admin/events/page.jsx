@@ -827,28 +827,28 @@ const EventsPage = () => {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 mt-auto">
                   <button
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-indigo-600 hover:to-blue-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-indigo-600 hover:to-blue-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center cursor-pointer"
                     onClick={() => handleViewEvent(event._id)}
                     title="View event details"
                   >
                     <Eye className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">View</span>
                   </button>
                   <button
-                    className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-violet-600 hover:to-purple-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-violet-600 hover:to-purple-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center cursor-pointer"
                     onClick={() => handleViewTeams(event._id, event.title)}
                     title="View participating teams"
                   >
                     <Users className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Teams</span>
                   </button>
                   <button
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-emerald-600 hover:to-green-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-emerald-600 hover:to-green-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center cursor-pointer"
                     onClick={() => openEditModal(event)}
                     title="Edit event"
                   >
                     <Edit className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Edit</span>
                   </button>
                   <button
-                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-pink-600 hover:to-red-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-pink-600 hover:to-red-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center cursor-pointer"
                     onClick={() => handleDeleteEvent(event._id)}
                     title="Delete event"
                   >
@@ -876,7 +876,7 @@ const EventsPage = () => {
                 </p>
               </div>
               <button
-                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0"
+                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 cursor-pointer"
                 onClick={closeTeamsModal}
                 aria-label="Close"
               >
