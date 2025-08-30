@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { eventAPI, registrationAPI } from '@/services/api';
 import { useUser } from '@/context/UserContext';
+import Navbar from '@/Components/Homepage/Navbar';
 import { 
   Calendar,
   Clock,
@@ -267,37 +268,8 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                <ArrowLeft size={20} />
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-black text-sm">C</span>
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">
-                  codex
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                <Share2 size={20} />
-              </button>
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                <Download size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Event Selection */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-pink-500 to-cyan-500 bg-clip-text text-transparent">

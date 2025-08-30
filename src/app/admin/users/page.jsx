@@ -1,11 +1,9 @@
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import { Search, Edit, Trash2, Users, Plus, X, CheckCircle, AlertCircle } from "lucide-react";
-import axios from "axios";
 import { useAdmin } from '@/context/AdminContext';
 import { useRouter } from 'next/navigation';
-
-const API_BASE = "http://localhost:5000/api/v1/managedUsers";
+import { managedUserAPI } from '@/services/api';
 
 const UsersPage = () => {
   const { isAuthenticated: adminAuthenticated, loading: adminLoading } = useAdmin();
@@ -96,8 +94,8 @@ const UsersPage = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_BASE);
-      setUsers(res.data.data);
+      const result = await managedUserAPI.getAllManagedUsers();
+      setUsers(result.data);
       showNotification("Users loaded successfully!");
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -111,7 +109,7 @@ const UsersPage = () => {
     if (!window.confirm(`Are you sure you want to delete ${userName}?`)) return;
     
     try {
-      await axios.delete(`${API_BASE}/${id}`);
+      await managedUserAPI.deleteManagedUser(id);
       fetchUsers();
       showNotification(`${userName} deleted successfully!`);
     } catch (err) {
@@ -191,7 +189,7 @@ const UsersPage = () => {
         githubDP: generateGithubDP(form.github)
       };
 
-      await axios.post(API_BASE, userData);
+      await managedUserAPI.createManagedUser(userData);
       setCreatingUser(false);
       setForm({ 
         name: "", 
@@ -218,7 +216,7 @@ const UsersPage = () => {
         githubDP: generateGithubDP(form.github)
       };
 
-      await axios.patch(`${API_BASE}/update/${editingUser}`, userData);
+      await managedUserAPI.updateManagedUser(editingUser, userData);
       setEditingUser(null);
       setForm({ 
         name: "", 

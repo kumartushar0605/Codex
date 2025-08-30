@@ -295,6 +295,12 @@ export const managedUserAPI = {
     return response.data;
   },
 
+  // Update managed user (admin only)
+  updateManagedUser: async (id, userData) => {
+    const response = await api.patch(`/api/v1/managedUsers/update/${id}`, userData);
+    return response.data;
+  },
+
   // Delete managed user (admin only)
   deleteManagedUser: async (id) => {
     const response = await api.delete(`/api/v1/managedUsers/${id}`);
