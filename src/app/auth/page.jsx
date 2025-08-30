@@ -89,64 +89,98 @@ const AuthPage = () => {
         } else {
           // User signup validation
           if (!formData.fullName || formData.fullName.length < 3) {
-            toast.error('Full name must be at least 3 characters long');
-            setLoading(false);
-            return;
-          }
-          if (!formData.email || !formData.email.includes('@')) {
-            toast.error('Please enter a valid email address');
-            setLoading(false);
-            return;
-          }
-          if (!formData.password || formData.password.length < 6) {
-            toast.error('Password must be at least 6 characters long');
-            setLoading(false);
-            return;
-          }
-          if (!formData.regNumber) {
-            toast.error('Registration number is required');
-            setLoading(false);
-            return;
-          }
-          if (!formData.branch) {
-            toast.error('Please select your branch');
-            setLoading(false);
-            return;
-          }
-          if (!formData.year) {
-            toast.error('Please select your year');
-            setLoading(false);
-            return;
-          }
-          if (!formData.teamName) {
-            toast.error('Team name is required');
-            setLoading(false);
-            return;
-          }
-          if (!formData.teamSize) {
-            toast.error('Team size is required');
-            setLoading(false);
-            return;
-          }
-          if (!formData.expectations) {
-            toast.error('Please share your expectations');
-            setLoading(false);
-            return;
-          }
-          if (!formData.aggreeTerms) {
-            toast.error('Please agree to the terms and conditions');
-            setLoading(false);
-            return;
-          }
+    toast.error('Full name must be at least 3 characters long');
+    setLoading(false);
+    return;
+  }
+  if (!formData.email || !formData.email.includes('@')) {
+    toast.error('Please enter a valid email address');
+    setLoading(false);
+    return;
+  }
+  if (!formData.password || formData.password.length < 6) {
+    toast.error('Password must be at least 6 characters long');
+    setLoading(false);
+    return;
+  }
+  if (!formData.regNumber) {
+    toast.error('Registration number is required');
+    setLoading(false);
+    return;
+  }
+  if (!formData.phone || formData.phone.length < 10) {
+    toast.error('Phone number is required');
+    setLoading(false);
+    return;
+  }
+  if (!formData.branch) {
+    toast.error('Please select your branch');
+    setLoading(false);
+    return;
+  }
+  if (!formData.year) {
+    toast.error('Please select your year');
+    setLoading(false);
+    return;
+  }
+  if (!formData.teamName) {
+    toast.error('Team name is required');
+    setLoading(false);
+    return;
+  }
+  if (!formData.teamSize) {
+    toast.error('Team size is required');
+    setLoading(false);
+    return;
+  }
+  if (!formData.expectations) {
+    toast.error('Please share your expectations');
+    setLoading(false);
+    return;
+  }
+  if (!formData.aggreeTerms) {
+    toast.error('Please agree to the terms and conditions');
+    setLoading(false);
+    return;
+  }
 
-          // User signup
-          const result = await userSignup(formData);
-          if (result.success) {
-            toast.success('Registration successful!');
-            router.push('/');
-          } else {
-            toast.error(result.error || 'Registration failed');
-          }
+  // ✅ Send all required fields to backend
+  const payload = {
+    fullName: formData.fullName,
+    email: formData.email,
+    password: formData.password,
+    regNumber: formData.regNumber,
+    phone: Number(formData.phone),
+    branch: formData.branch,
+    year: Number(formData.year),
+    teamName: formData.teamName,
+    teamSize: Number(formData.teamSize),
+    expectations: formData.expectations,
+    experience: formData.experience || "",
+    skills: formData.skills || [],
+    dietary: formData.dietary || "",
+    tshirtSize: formData.tshirtSize || "",
+    github: formData.github || "",
+    linkedin: formData.linkedin || "",
+    aggreeTerms: formData.aggreeTerms || false
+  };
+
+  try {
+    const result = await userSignup(payload);
+    
+    if (result.success) {
+      toast.success('Registration successful!');
+      router.push('/');
+    } else {
+      toast.error(result.error || 'Registration failed');
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error('Something went wrong. Try again later.');
+  } finally {
+    setLoading(false);
+  }
+
         }
       }
     } catch (error) {

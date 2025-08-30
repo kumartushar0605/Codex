@@ -1,14 +1,23 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { eventAPI } from '@/services/api';
-import { Calendar, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { eventAPI, registrationAPI } from '@/services/api';
+import { Calendar, Plus, Trash2, Edit, Eye, Users, X } from 'lucide-react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  
+  // Teams related state
+  const [showTeamsModal, setShowTeamsModal] = useState(false);
+  const [showTeamDetailsModal, setShowTeamDetailsModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEventTitle, setSelectedEventTitle] = useState('');
+  const [teams, setTeams] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [teamsLoading, setTeamsLoading] = useState(false);
   const [eventFormData, setEventFormData] = useState({
     title: '',
     subtitle: '',
@@ -143,12 +152,12 @@ const EventsPage = () => {
      e.preventDefault();
     console.log('=== EVENT CREATION STARTED ===');
     console.log('Initial form data:', eventFormData);
-    
+
      try {
       setLoading(true);
-    const response = await axios.post("http://localhost:5000/api/event/events", eventFormData);
-    
-    console.log("✅ Event created successfully:", response.data);
+    const response = await eventAPI.createEvent(eventFormData);
+
+    console.log("✅ Event created successfully:", response);
      setLoading(false);
      toast.success("Event created successfully!");
 
@@ -179,207 +188,210 @@ const EventsPage = () => {
       toast.error(error.response?.data?.message || "Failed to create event. Please try again.");
     setLoading(false);
   }
-    // try {
-    //   setLoading(true);
-    //   console.log('Loading state set to true');
-      
-    //   // Debug: Log the form data being sent
-    //   console.log('Form data being sent:', eventFormData);
-      
-    //   // Validate required fields
-    //   const requiredFields = ['title', 'subtitle', 'date', 'time', 'location', 'duration', 'participants', 'prizes', 'type', 'color', 'bgColor', 'highlights', 'description'];
-    //   console.log('Checking required fields:', requiredFields);
-      
-    //   const missingFields = requiredFields.filter(field => {
-    //     if (field === 'highlights') {
-    //       const isEmpty = !eventFormData[field] || eventFormData[field].length === 0;
-    //       console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
-    //       return isEmpty;
-    //     }
-    //     const isEmpty = !eventFormData[field];
-    //     console.log(`Field '${field}':`, eventFormData[field], 'isEmpty:', isEmpty);
-    //     return isEmpty;
-    //   });
-      
-    //   console.log('Missing fields:', missingFields);
-      
-    //   if (missingFields.length > 0) {
-    //     const fieldNames = missingFields.map(field => {
-    //       if (field === 'highlights') return 'at least one highlight';
-    //       return field;
-    //     });
-    //     console.log('Validation failed. Missing fields:', fieldNames);
-    //     toast.error(`Missing required fields: ${fieldNames.join(', ')}`);
-    //     return;
-    //   }
-      
-    //   console.log('✅ All required fields are present');
-      
-    //   // Convert date string to Date object if it's a string
-    //   console.log('Processing date field:', eventFormData.date);
-    //   const processedDate = eventFormData.date ? new Date(eventFormData.date).toISOString() : eventFormData.date;
-    //   console.log('Processed date:', processedDate);
-      
-    //   console.log('Processing participantsLimit field:', eventFormData.participantsLimit);
-    //   const processedParticipantsLimit = eventFormData.participantsLimit ? parseInt(eventFormData.participantsLimit) : undefined;
-    //   console.log('Processed participantsLimit:', processedParticipantsLimit);
-      
-    //   const eventDataToSend = {
-    //     ...eventFormData,
-    //     date: processedDate,
-    //     participantsLimit: processedParticipantsLimit
-    //   };
-      
-    //   console.log('📤 Final event data to send:', eventDataToSend);
-    //   console.log('📤 Data type check - highlights:', typeof eventDataToSend.highlights, Array.isArray(eventDataToSend.highlights));
-    //   console.log('📤 Data type check - schedule:', typeof eventDataToSend.schedule, Array.isArray(eventDataToSend.schedule));
-    //   console.log('📤 Data type check - requirements:', typeof eventDataToSend.requirements, Array.isArray(eventDataToSend.requirements));
-      
-    //   console.log('🚀 Making API call to createEvent...');
-    //   const response = await eventAPI.createEvent(eventDataToSend);
-    //   console.log('📥 Raw API Response:', response);
-    //   console.log('📥 Response type:', typeof response);
-    //   console.log('📥 Response keys:', Object.keys(response));
-      
-    //   // Check if response has the expected structure
-    //   console.log('🔍 Checking response structure...');
-    //   console.log('Response.success:', response.success);
-    //   console.log('Response.statusCode:', response.statusCode);
-    //   console.log('Response.message:', response.message);
-      
-    //   if (response.success || response.statusCode === 200 || response.statusCode === 201) {
-    //     console.log('✅ Event creation successful!');
-    //     toast.success('Event created successfully!');
-    //     // setShowModal(false);
-    //     console.log('🔄 Resetting form data...');
-    //     setEventFormData({
-    //       title: '',
-    //       subtitle: '',
-    //       date: '',
-    //       time: '',
-    //       participantsLimit: '',
-    //       location: '',
-    //       duration: '',
-    //       participants: '',
-    //       prizes: '',
-    //       type: '',
-    //       color: '#3B82F6',
-    //       bgColor: '#1E40AF',
-    //       highlights: [],
-    //       schedule: [],
-    //       requirements: [],
-    //       description: ''
-    //     });
-    //     console.log('🔄 Refreshing events list...');
-    //     // fetchEvents(); // Refresh events list
-    //   } else {
-    //     console.log('❌ Event creation failed - response structure issue');
-    //     console.log('Response details:', response);
-    //     toast.error(response.message || 'Failed to create event');
-    //   }
-    // } catch (error) {
-    //   console.log('❌ ERROR OCCURRED DURING EVENT CREATION');
-    //   console.error('Full error object:', error);
-    //   console.error('Error name:', error.name);
-    //   console.error('Error message:', error.message);
-    //   console.error('Error stack:', error.stack);
-      
-    //   if (error.response) {
-    //     console.error('📥 Error response status:', error.response.status);
-    //     console.error('📥 Error response statusText:', error.response.statusText);
-    //     console.error('📥 Error response headers:', error.response.headers);
-    //     console.error('📥 Error response data:', error.response.data);
-    //   } else if (error.request) {
-    //     console.error('📡 Network error - request was made but no response received');
-    //     console.error('📡 Request details:', error.request);
-    //   } else {
-    //     console.error('🔧 Error in request setup:', error.message);
-    //   }
-      
-    //   // Handle specific error cases
-    //   if (error.response?.data?.message?.includes('already in use')) {
-    //     console.log('🚫 Event type already exists error');
-    //     toast.error('Event type already exists. Please choose a different type.');
-    //   } else if (error.response?.data?.message?.includes('Incomplete details')) {
-    //     console.log('📝 Incomplete details error');
-    //     toast.error('Please fill in all required fields.');
-    //   } else {
-    //     console.log('❓ Unknown error type');
-    //     toast.error(error.response?.data?.message || 'Failed to create event');
-    //   }
-    // } finally {
-    //   console.log('🏁 Setting loading to false');
-    //   setLoading(false);
-    //   console.log('=== EVENT CREATION PROCESS COMPLETED ===');
-    // }
   };
 
   const handleDeleteEvent = async (eventId) => {
   if (window.confirm('Are you sure you want to delete this event?')) {
-    console.log("eventID: " + eventId);
+      console.log("eventID: " + eventId);
+
+      try {
+        const response = await eventAPI.deleteEvent(eventId);
+
+        console.log("✅ Event deleted:", response);
+        toast.success("Event deleted successfully!");
+        fetchEvents();
+      } catch (error) {
+        console.error("❌ Error deleting event:", error.response?.data || error.message);
+        toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
+      }
+    }
+  };
+
+  // Teams related functions
+  const handleViewTeams = async (eventId, eventTitle) => {
+    setSelectedEventId(eventId);
+    setSelectedEventTitle(eventTitle);
+    setShowTeamsModal(true);
+    setTeamsLoading(true);
+    
+    try {
+      const response = await registrationAPI.getEventRegistrations(eventId);
+      setTeams(response.data || []);
+    } catch (error) {
+      console.error("❌ Error fetching teams:", error);
+      toast.error("Failed to fetch teams. Please try again.");
+      setTeams([]);
+    } finally {
+      setTeamsLoading(false);
+    }
+  };
+
+  const handleViewTeamDetails = (team) => {
+    setSelectedTeam(team);
+    setShowTeamDetailsModal(true);
+  };
+
+  const closeTeamsModal = () => {
+    setShowTeamsModal(false);
+    setSelectedEventId(null);
+    setSelectedEventTitle('');
+    setTeams([]);
+  };
+
+  const closeTeamDetailsModal = () => {
+    setShowTeamDetailsModal(false);
+    setSelectedTeam(null);
+  };
+
+  const handleUpdateEvent = async (e) => {
+    e.preventDefault();
+
+    if (!editingEvent) {
+      toast.error('No event selected for editing');
+      return;
+    }
 
     try {
-      const response = await axios.delete(`http://localhost:5000/api/event/events/${eventId}`);
-      
-      console.log("✅ Event deleted:", response.data);
-      toast.success("Event deleted successfully!");
-       fetchEvents();
+      setLoading(true);
+      const response = await eventAPI.updateEvent(editingEvent._id, eventFormData);
+
+      console.log("✅ Event updated successfully:", response);
+      toast.success("Event updated successfully!");
+
+      // Reset form and close modal
+      resetForm();
+      setShowModal(false);
+      setEditingEvent(null);
+      fetchEvents(); // Refresh events list
+
     } catch (error) {
-      console.error("❌ Error deleting event:", error.response?.data || error.message);
-      toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
+      console.error("❌ Error updating event:", error.response?.data || error.message);
+
+      if (error.response?.status === 401) {
+        toast.error('Authentication required. Please login again.');
+      } else {
+        toast.error(error.response?.data?.message || "Failed to update event. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
-  }
-};
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setEditingEvent(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (event) => {
+    setEventFormData({
+      title: event.title,
+      subtitle: event.subtitle,
+      date: new Date(event.date).toISOString().split('T')[0],
+      time: event.time,
+      participantsLimit: event.participantsLimit || '',
+      location: event.location,
+      duration: event.duration,
+      participants: event.participants,
+      prizes: event.prizes,
+      type: event.type,
+      color: event.color,
+      bgColor: event.bgColor,
+      highlights: event.highlights || [],
+      schedule: event.schedule || [],
+      requirements: event.requirements || [],
+      description: event.description
+    });
+    setEditingEvent(event);
+    setShowModal(true);
+  };
+
+  const resetForm = () => {
+    setEventFormData({
+      title: '',
+      subtitle: '',
+      date: '',
+      time: '',
+      participantsLimit: '',
+      location: '',
+      duration: '',
+      participants: '',
+      prizes: '',
+      type: '',
+      color: '#3B82F6',
+      bgColor: '#1E40AF',
+      highlights: [],
+      schedule: [],
+      requirements: [],
+      description: ''
+    });
+  };
+
+  const handleViewEvent = async (eventId) => {
+    try {
+      const response = await eventAPI.getEvent(eventId);
+      console.log("Event details:", response);
+      // You can implement a view modal here or navigate to a detail page
+      toast.info("Event details logged to console");
+    } catch (error) {
+      console.error("Error fetching event details:", error);
+      toast.error("Failed to fetch event details");
+    }
+  };
 
   return (
-    <div className="p-8 min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-extrabold text-blue-200 tracking-tight drop-shadow">Manage Events</h1>
+    <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-blue-200 tracking-tight drop-shadow">Manage Events</h1>
         <button
-          className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
-          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+          onClick={openCreateModal}
         >
-          <Plus className="w-5 h-5" /> Create Event
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> Create Event
         </button>
       </div>
 
       {/* Event Creation Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all">
-          <div className="bg-gradient-to-br from-slate-900 to-black text-white rounded-3xl shadow-2xl w-full max-w-4xl p-8 relative animate-fadeIn max-h-[95vh] overflow-y-auto border border-slate-700/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-black text-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl p-4 sm:p-6 lg:p-8 relative animate-fadeIn max-h-[95vh] overflow-y-auto border border-slate-700/50">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700/50">
-              <div>
-                <h2 className="text-3xl font-bold text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text">Create New Event</h2>
-                <p className="text-slate-400 text-sm mt-1">Fill in the details below to create a new event</p>
+            <div className="flex items-start justify-between mb-6 sm:mb-8 pb-4 border-b border-slate-700/50">
+              <div className="flex-1 pr-4">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text">
+                  {editingEvent ? 'Edit Event' : 'Create New Event'}
+                </h2>
+                <p className="text-slate-400 text-xs sm:text-sm mt-1">
+                  {editingEvent ? 'Update the event details below' : 'Fill in the details below to create a new event'}
+                </p>
               </div>
               <button
-                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0"
                 onClick={() => setShowModal(false)}
                 aria-label="Close"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             <form
-          onSubmit={handleCreateEvent}
-              className="space-y-8"
+              onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
+              className="space-y-6 sm:space-y-8"
             >
               {/* Basic Information Section */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-cyan-300">Basic Information</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-cyan-300">Basic Information</h3>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-300">Event Title *</label>
                     <input 
@@ -729,14 +741,14 @@ const EventsPage = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Creating Event...
+                      {editingEvent ? 'Updating Event...' : 'Creating Event...'}
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-3">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
-                      Create Event
+                      {editingEvent ? 'Update Event' : 'Create Event'}
                     </div>
                   )}
                 </button>
@@ -747,56 +759,356 @@ const EventsPage = () => {
       )}
 
       {/* List of Events */}
-      <div className="mt-10">
+      <div className="mt-6 sm:mt-8 lg:mt-10">
         {loading && events.length === 0 ? (
-          <div className="flex justify-center items-center h-40">
-            <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></span>
-            <span className="ml-4 text-cyan-300 font-semibold">Loading events...</span>
+          <div className="flex justify-center items-center h-32 sm:h-40">
+            <span className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-cyan-500"></span>
+            <span className="ml-3 sm:ml-4 text-cyan-300 font-semibold text-sm sm:text-base">Loading events...</span>
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center text-slate-400 py-20">
-            <Calendar className="mx-auto mb-4 w-12 h-12 text-cyan-700/40" />
-            <p className="text-lg">No events found. Start by creating a new event!</p>
+          <div className="text-center text-slate-400 py-12 sm:py-16 lg:py-20">
+            <Calendar className="mx-auto mb-3 sm:mb-4 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-cyan-700/40" />
+            <p className="text-base sm:text-lg">No events found. Start by creating a new event!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {events.map(event => (
               <div
                 key={event._id}
-                className="bg-slate-900/80 rounded-2xl shadow-xl p-6 flex flex-col border-t-4 border-cyan-700 hover:scale-[1.025] hover:shadow-2xl transition-transform duration-200 group relative overflow-hidden"
+                className="bg-slate-900/80 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 flex flex-col border-t-4 border-cyan-700 hover:scale-[1.025] hover:shadow-2xl transition-transform duration-200 group relative overflow-hidden"
                 style={{ borderColor: event.color || '#3B82F6' }}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-cyan-200 group-hover:text-cyan-400 transition-colors duration-200">{event.title}</h3>
+                <div className="flex items-start justify-between mb-2 gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-cyan-200 group-hover:text-cyan-400 transition-colors duration-200 flex-1">{event.title}</h3>
                   <span
-                    className="rounded px-2 py-1 text-xs font-semibold bg-cyan-800 text-cyan-100 shadow"
+                    className="rounded px-2 py-1 text-xs font-semibold bg-cyan-800 text-cyan-100 shadow flex-shrink-0"
                     style={{ background: event.bgColor || '#1E40AF', color: '#fff' }}
                   >
                     {event.type}
                   </span>
                 </div>
-                <p className="text-slate-300 mb-1">{event.subtitle}</p>
-                <p className="text-slate-400 text-sm mb-2">{event.date ? new Date(event.date).toLocaleString() : ''}</p>
-                <p className="text-slate-200 mb-2">{event.location}</p>
-                <div className="flex flex-wrap gap-2 mb-2">
+                <p className="text-slate-300 mb-1 text-sm sm:text-base">{event.subtitle}</p>
+                <p className="text-slate-400 text-xs sm:text-sm mb-2">{event.date ? new Date(event.date).toLocaleString() : ''}</p>
+                <p className="text-slate-200 mb-2 text-sm sm:text-base">{event.location}</p>
+                <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
                   {event.highlights?.map((h, i) => (
                     <span key={i} className="bg-cyan-900 text-cyan-200 px-2 py-1 rounded text-xs shadow">{h}</span>
                   ))}
                 </div>
-                <div className="flex gap-2 mt-auto">
+                <div className="flex flex-col sm:flex-row gap-2 mt-auto">
                   <button
-                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-3 py-1 rounded shadow hover:from-pink-600 hover:to-red-600 flex items-center gap-1 transition"
-                    onClick={() => handleDeleteEvent(event._id)}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-indigo-600 hover:to-blue-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    onClick={() => handleViewEvent(event._id)}
+                    title="View event details"
                   >
-                    <Trash2 className="w-4 h-4" /> Delete
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">View</span>
                   </button>
-                  {/* Add Edit/View buttons as needed */}
+                  <button
+                    className="bg-gradient-to-r from-purple-600 to-violet-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-violet-600 hover:to-purple-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    onClick={() => handleViewTeams(event._id, event.title)}
+                    title="View participating teams"
+                  >
+                    <Users className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Teams</span>
+                  </button>
+                  <button
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-emerald-600 hover:to-green-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    onClick={() => openEditModal(event)}
+                    title="Edit event"
+                  >
+                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Edit</span>
+                  </button>
+                  <button
+                    className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-2 sm:px-3 py-1 sm:py-2 rounded shadow hover:from-pink-600 hover:to-red-600 flex items-center gap-1 transition text-xs sm:text-sm flex-1 sm:flex-none justify-center"
+                    onClick={() => handleDeleteEvent(event._id)}
+                    title="Delete event"
+                  >
+                    <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Delete</span>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Teams Modal */}
+      {showTeamsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-black text-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative animate-fadeIn max-h-[90vh] overflow-y-auto border border-slate-700/50">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-700/50">
+              <div className="flex-1 pr-4">
+                <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text">
+                  Teams Participating
+                </h2>
+                <p className="text-slate-400 text-sm mt-1">
+                  Event: {selectedEventTitle}
+                </p>
+              </div>
+              <button
+                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0"
+                onClick={closeTeamsModal}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Teams Content */}
+            <div className="space-y-4">
+              {teamsLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></span>
+                  <span className="ml-4 text-purple-300 font-semibold">Loading teams...</span>
+                </div>
+              ) : teams.length === 0 ? (
+                <div className="text-center text-slate-400 py-16">
+                  <Users className="mx-auto mb-4 w-12 h-12 text-purple-700/40" />
+                  <p className="text-lg">No teams registered for this event yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {teams.map((team, index) => (
+                    <div
+                      key={team._id || index}
+                      className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 hover:border-purple-500/50 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                      onClick={() => handleViewTeamDetails(team)}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-lg font-semibold text-purple-300">
+                          {team.teamName || 'Individual Participant'}
+                        </h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          team.status === 'confirmed' ? 'bg-green-800 text-green-200' :
+                          team.status === 'registered' ? 'bg-blue-800 text-blue-200' :
+                          team.status === 'cancelled' ? 'bg-red-800 text-red-200' :
+                          'bg-yellow-800 text-yellow-200'
+                        }`}>
+                          {team.status}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <p className="text-slate-300">
+                          <span className="font-medium">Leader:</span> {team.userId?.fullName || 'N/A'}
+                        </p>
+                        <p className="text-slate-300">
+                          <span className="font-medium">Team Size:</span> {team.teamSize || 1}
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          Registered: {new Date(team.registrationDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-slate-700/50">
+                        <p className="text-xs text-purple-400 hover:text-purple-300">
+                          Click to view details →
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Details Modal */}
+      {showTeamDetailsModal && selectedTeam && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-sm transition-all p-4">
+          <div className="bg-gradient-to-br from-slate-900 to-black text-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 relative animate-fadeIn max-h-[90vh] overflow-y-auto border border-slate-700/50">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-6 pb-4 border-b border-slate-700/50">
+              <div className="flex-1 pr-4">
+                <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-violet-400 bg-clip-text">
+                  {selectedTeam.teamName || 'Individual Participant'}
+                </h2>
+                <p className="text-slate-400 text-sm mt-1">
+                  Team Details
+                </p>
+              </div>
+              <button
+                className="w-10 h-10 rounded-full bg-slate-800 hover:bg-red-600 text-gray-400 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0"
+                onClick={closeTeamDetailsModal}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Team Details Content */}
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Team Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Team Name</label>
+                      <p className="text-white">{selectedTeam.teamName || 'Individual'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Team Size</label>
+                      <p className="text-white">{selectedTeam.teamSize || 1}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Status</label>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedTeam.status === 'confirmed' ? 'bg-green-800 text-green-200' :
+                        selectedTeam.status === 'registered' ? 'bg-blue-800 text-blue-200' :
+                        selectedTeam.status === 'cancelled' ? 'bg-red-800 text-red-200' :
+                        'bg-yellow-800 text-yellow-200'
+                      }`}>
+                        {selectedTeam.status}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Registration Date</label>
+                      <p className="text-white">{new Date(selectedTeam.registrationDate).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Contact Information
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Team Leader</label>
+                      <p className="text-white">{selectedTeam.userId?.fullName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Email</label>
+                      <p className="text-white">{selectedTeam.userId?.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Phone</label>
+                      <p className="text-white">{selectedTeam.userId?.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Registration Number</label>
+                      <p className="text-white">{selectedTeam.userId?.regNumber || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Info */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                  Academic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400">Branch</label>
+                    <p className="text-white">{selectedTeam.branch || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-400">Year</label>
+                    <p className="text-white">{selectedTeam.year || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills and Links */}
+              {(selectedTeam.skills?.length > 0 || selectedTeam.githubLink || selectedTeam.linkedInLink) && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Skills & Links
+                  </h3>
+                  
+                  {selectedTeam.skills?.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400 mb-2">Skills</label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTeam.skills.map((skill, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-purple-800/30 text-purple-200 rounded-full text-sm border border-purple-700/50"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTeam.githubLink && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">GitHub</label>
+                        <a
+                          href={selectedTeam.githubLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline break-all"
+                        >
+                          {selectedTeam.githubLink}
+                        </a>
+                      </div>
+                    )}
+                    {selectedTeam.linkedInLink && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">LinkedIn</label>
+                        <a
+                          href={selectedTeam.linkedInLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline break-all"
+                        >
+                          {selectedTeam.linkedInLink}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Info */}
+              {(selectedTeam.expectations || selectedTeam.description || selectedTeam.tshirtSize || selectedTeam.dietary) && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Additional Information
+                  </h3>
+                  
+                  {selectedTeam.expectations && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Expectations</label>
+                      <p className="text-white">{selectedTeam.expectations}</p>
+                    </div>
+                  )}
+                  
+                  {selectedTeam.description && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-400">Description</label>
+                      <p className="text-white">{selectedTeam.description}</p>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTeam.tshirtSize && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">T-Shirt Size</label>
+                        <p className="text-white">{selectedTeam.tshirtSize}</p>
+                      </div>
+                    )}
+                    {selectedTeam.dietary && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-400">Dietary Requirements</label>
+                        <p className="text-white">{selectedTeam.dietary}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { eventAPI, registrationAPI } from '@/services/api';
+import { useUser } from '@/context/UserContext';
 import { 
   Calendar,
   Clock,
@@ -28,6 +30,7 @@ import {
 } from 'lucide-react';
 
 const EventRegistrationPage = () => {
+  const { user, isAuthenticated } = useUser();
   const [events, setEvents] = useState({});
   const [eventKeys, setEventKeys] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState('');
@@ -50,6 +53,7 @@ const EventRegistrationPage = () => {
     dietary: '',
     tshirtSize: '',
     expectations: '',
+    description: '',
     agreeTerms: false
   });
 
@@ -57,12 +61,9 @@ useEffect(() => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/event/events');
-      if (!response.ok) {
-        throw new Error('Failed to fetch events');
-      }
+      const response = await eventAPI.getAllEvents();
 
-      const { data: eventsArray } = await response.json(); // <-- fix here
+      const eventsArray = response.data; // <-- fix here
 
       const transformedEvents = {};
       const keys = [];
@@ -95,6 +96,21 @@ useEffect(() => {
 
   fetchEvents();
 }, []);
+
+// Populate form with user data when user is available
+useEffect(() => {
+  if (user && isAuthenticated) {
+    setFormData(prev => ({
+      ...prev,
+      fullName: user.fullName || '',
+      email: user.email || '',
+      phone: user.phoneNumber || '',
+      regNumber: user.regNumber || '',
+      branch: user.branch || '',
+      year: user.year || ''
+    }));
+  }
+}, [user, isAuthenticated]);
 
 
   // Helper functions for colors based on event type
@@ -154,24 +170,30 @@ useEffect(() => {
     setSubmitting(true);
     
     try {
-      const eventName = currentEvent?.title || selectedEvent;
-      const response = await fetch(`http://localhost:5000/api/sendevent?event=${encodeURIComponent(eventName)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          eventName: eventName,
-          eventType: currentEvent?.type
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit registration');
+      const eventId = currentEvent?._id;
+      
+      if (!eventId) {
+        throw new Error('Event ID not found');
       }
 
-      const result = await response.json();
+      // Map frontend field names to backend schema
+      const registrationData = {
+        description: formData.description || '',
+        githubLink: formData.github || '',
+        linkedInLink: formData.linkedin || '',
+        teamName: formData.teamName || '',
+        teamSize: parseInt(formData.teamSize) || 1,
+        skills: formData.skills || [],
+        expectations: formData.expectations || '',
+        agreeTerms: formData.agreeTerms || false,
+        deitary: formData.dietary || '', // Note: backend has typo 'deitary' instead of 'dietary'
+        tshirtSize: formData.tshirtSize || '',
+        branch: formData.branch || '',
+        year: parseInt(formData.year) || 1,
+        experience: formData.experience || ''
+      };
+
+      const result = await registrationAPI.registerForEvent(eventId, registrationData);
       alert('Registration submitted successfully!');
       
       // Reset form
@@ -191,6 +213,7 @@ useEffect(() => {
         dietary: '',
         tshirtSize: '',
         expectations: '',
+        description: '',
         agreeTerms: false
       });
     } catch (err) {
@@ -400,6 +423,21 @@ useEffect(() => {
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-8">
               <h3 className="text-2xl font-bold text-white mb-6">Registration Form</h3>
               
+              {!isAuthenticated ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="w-8 h-8 text-cyan-400" />
+                  </div>
+                  <h4 className="text-xl font-bold text-white mb-2">Login Required</h4>
+                  <p className="text-gray-300 mb-6">You need to be logged in to register for events.</p>
+                  <a 
+                    href="/auth" 
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-300"
+                  >
+                    Login / Sign Up
+                  </a>
+                </div>
+              ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Personal Information */}
                 <div>
@@ -564,7 +602,7 @@ useEffect(() => {
                       <Users size={20} className="mr-2 text-cyan-400" />
                       Team Information
                     </h4>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Team Name</label>
                         <input
@@ -642,21 +680,31 @@ useEffect(() => {
                         <option value="xxl">XXL</option>
                       </select>
                     </div>
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Dietary Restrictions</label>
-                      <select
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Dietary Preferences</label>
+                      <input
+                        type="text"
                         name="dietary"
                         value={formData.dietary}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
-                      >
-                        <option value="">No Restrictions</option>
-                        <option value="vegetarian">Vegetarian</option>
-                        <option value="vegan">Vegan</option>
-                        <option value="gluten-free">Gluten Free</option>
-                        <option value="other">Other</option>
-                      </select>
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                        placeholder="e.g., Vegetarian, Vegan, No nuts"
+                      />
                     </div>
+                      
+                  </div>
+                  
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Description (Optional)</label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"
+                      placeholder="Tell us about yourself and why you want to participate..."
+                    />
                   </div>
                   
                   <div className="mt-4">
@@ -716,6 +764,7 @@ useEffect(() => {
                   </button>
                 </div>
               </form>
+              )}
             </div>
           </div>
         </div>
