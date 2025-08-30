@@ -131,7 +131,12 @@ export const adminAPI = {
       return { success: true };
     } catch (error) {
       console.error('Session verification error:', error);
-      return { success: false, error: 'Session verification failed' };
+      // Don't fail immediately on network errors, only on auth errors
+      if (error.response?.status === 401) {
+        return { success: false, error: 'Session verification failed' };
+      }
+      // For other errors (network, server issues), assume session is still valid
+      return { success: true };
     }
   },
 };
