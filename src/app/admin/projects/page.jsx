@@ -1,8 +1,12 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Eye, Edit, Trash2, Check, X, Calendar, Users, Code, Filter, Search } from 'lucide-react';
+import { useAdmin } from '@/context/AdminContext';
+import { useRouter } from 'next/navigation';
 
 const ProjectsPage = () => {
+  const { isAuthenticated: adminAuthenticated, loading: adminLoading } = useAdmin();
+  const router = useRouter();
   const [projects, setProjects] = useState([
     {
       id: 1,
@@ -80,6 +84,30 @@ const ProjectsPage = () => {
     const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Admin authentication check
+  useEffect(() => {
+    if (!adminLoading && !adminAuthenticated) {
+      router.push('/');
+    }
+  }, [adminAuthenticated, adminLoading, router]);
+
+  // Show loading while checking admin authentication
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, don't render anything (will redirect)
+  if (!adminAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">

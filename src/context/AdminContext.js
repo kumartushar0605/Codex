@@ -54,11 +54,22 @@ export const AdminProvider = ({ children }) => {
       router.push('/');
   };
 
+  // Function to navigate to admin routes with proper authentication
+  const navigateToAdmin = (path = '/admin') => {
+    if (admin) {
+      router.push(`${path}?admin=true`);
+    } else {
+      toast.error('Admin access required');
+      router.push('/');
+    }
+  };
+
   const value = {
     admin,
     loading,
     login,
     logout,
+    navigateToAdmin,
     isAuthenticated: !!admin,
   };
 

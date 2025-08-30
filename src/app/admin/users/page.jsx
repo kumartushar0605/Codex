@@ -2,10 +2,14 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Search, Edit, Trash2, Users, Plus, X, CheckCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
+import { useAdmin } from '@/context/AdminContext';
+import { useRouter } from 'next/navigation';
 
 const API_BASE = "http://localhost:5000/api/v1/managedUsers";
 
 const UsersPage = () => {
+  const { isAuthenticated: adminAuthenticated, loading: adminLoading } = useAdmin();
+  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,10 +64,34 @@ const UsersPage = () => {
     return username ? `https://github.com/${username}.png` : "";
   };
 
+  // Admin authentication check
+  useEffect(() => {
+    if (!adminLoading && !adminAuthenticated) {
+      router.push('/');
+    }
+  }, [adminAuthenticated, adminLoading, router]);
+
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => setNotification({ show: false, message: "", type: "" }), 3000);
   };
+
+  // Show loading while checking admin authentication
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, don't render anything (will redirect)
+  if (!adminAuthenticated) {
+    return null;
+  }
 
   const fetchUsers = async () => {
     try {

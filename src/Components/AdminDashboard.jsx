@@ -8,7 +8,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { useRouter } from 'next/navigation';
 
 const AdminDashboard = ({ sidebarOnly, onNavigate }) => {
-  const { admin, logout } = useAdmin();
+  const { admin, logout, navigateToAdmin } = useAdmin();
   const router = useRouter();
   const stats = {
     totalUsers: 0,
@@ -51,7 +51,7 @@ const AdminDashboard = ({ sidebarOnly, onNavigate }) => {
               key={item.id}
               onClick={() => {
                 if (item.route) {
-                  router.push(item.route);
+                  navigateToAdmin(item.route);
                   onNavigate?.(); // Close mobile menu after navigation
                 }
               }}
