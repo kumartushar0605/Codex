@@ -4,6 +4,7 @@ import { AdminProvider } from "@/context/AdminContext";
 import { UserProvider } from "@/context/UserContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Analytics } from "@vercel/analytics/next"
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
         <AdminProvider>
           <UserProvider>
             {children}
+            <Analytics/>
             <ToastContainer
               position="top-right"
               autoClose={5000}
