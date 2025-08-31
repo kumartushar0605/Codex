@@ -50,6 +50,7 @@ const EventRegistrationPage = () => {
     linkedin: '',
     teamName: '',
     teamSize: '1',
+    registrationRole: 'member', // Add registration role field
     skills: [],
     dietary: '',
     tshirtSize: '',
@@ -108,7 +109,8 @@ useEffect(() => {
       phone: user.phoneNumber || '',
       regNumber: user.regNumber || '',
       branch: user.branch || '',
-      year: user.year || ''
+      year: user.year || '',
+      registrationRole: 'member' // Default to member role
     }));
   }
 }, [user, isAuthenticated]);
@@ -177,13 +179,26 @@ useEffect(() => {
         throw new Error('Event ID not found');
       }
 
+      // Validate required fields based on registration role
+      if (!formData.teamName.trim()) {
+        alert('Team name is required for registration.');
+        setSubmitting(false);
+        return;
+      }
+      
+      if (formData.registrationRole === 'leader' && !formData.teamSize) {
+        alert('Team size is required for team leaders.');
+        setSubmitting(false);
+        return;
+      }
+
       // Map frontend field names to backend schema
       const registrationData = {
         description: formData.description || '',
         githubLink: formData.github || '',
         linkedInLink: formData.linkedin || '',
         teamName: formData.teamName || '',
-        teamSize: parseInt(formData.teamSize) || 1,
+        teamSize: formData.registrationRole === 'leader' ? parseInt(formData.teamSize) || 1 : 1,
         skills: formData.skills || [],
         expectations: formData.expectations || '',
         agreeTerms: formData.agreeTerms || false,
@@ -191,7 +206,8 @@ useEffect(() => {
         tshirtSize: formData.tshirtSize || '',
         branch: formData.branch || '',
         year: parseInt(formData.year) || 1,
-        experience: formData.experience || ''
+        experience: formData.experience || '',
+        registrationRole: formData.registrationRole || 'member' // Add registration role to data
       };
 
       const result = await registrationAPI.registerForEvent(eventId, registrationData);
@@ -210,6 +226,7 @@ useEffect(() => {
         linkedin: '',
         teamName: '',
         teamSize: '1',
+        registrationRole: 'member',
         skills: [],
         dietary: '',
         tshirtSize: '',
@@ -567,42 +584,114 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* Team Information (for Hackathon) */}
-                {currentEvent.type?.toLowerCase() === 'hackathon' && (
-                  <div>
-                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-                      <Users size={20} className="mr-2 text-cyan-400" />
-                      Team Information
-                    </h4>
-                    <div className="grid md:grid-cols-3 gap-4">
+                {/* Team Information */}
+                <div>
+                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <Users size={20} className="mr-2 text-cyan-400" />
+                    Team Information
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Team Name *</label>
+                      <input
+                        type="text"
+                        name="teamName"
+                        value={formData.teamName}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                        placeholder="Enter your team name"
+                        required
+                      />
+                    </div>
+                    {formData.registrationRole === 'leader' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Team Name</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Team Size *</label>
+                                                 <select
+                           name="teamSize"
+                           value={formData.teamSize}
+                           onChange={handleInputChange}
+                           className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                           required
+                         >
+                           <option value="">Select team size</option>
+                           <option value="1">Individual (1)</option>
+                           <option value="2">Team of 2</option>
+                           <option value="3">Team of 3</option>
+                           <option value="4">Team of 4</option>
+                           <option value="5">Team of 5</option>
+                           <option value="6">Team of 6</option>
+                         </select>
+                      </div>
+                    )}
+                  </div>
+                  {formData.registrationRole === 'member' && (
+                    <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                      <p className="text-blue-300 text-sm">
+                        <strong>Note:</strong> As a team member, you don't need to specify team size. The team leader will manage the team size.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Registration Role */}
+                <div>
+                  <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <User size={20} className="mr-2 text-cyan-400" />
+                    Registration Role
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                      formData.registrationRole === 'leader'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-slate-600/50 bg-slate-700/30 hover:border-slate-500/50'
+                    }`}>
+                      <label className="flex items-center cursor-pointer">
                         <input
-                          type="text"
-                          name="teamName"
-                          value={formData.teamName}
+                          type="radio"
+                          name="registrationRole"
+                          value="leader"
+                          checked={formData.registrationRole === 'leader'}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500/50 transition-colors"
-                          placeholder="Enter team name (optional)"
+                          className="mr-3 w-4 h-4 text-cyan-500 bg-slate-700 border-slate-600 focus:ring-cyan-500"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Team Size</label>
-                        <select
-                          name="teamSize"
-                          value={formData.teamSize}
+                        <div>
+                          <div className="flex items-center text-white font-medium">
+                            <Users size={18} className="mr-2 text-cyan-400" />
+                            Team Leader
+                          </div>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Register as a team leader and manage your team
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                    <div className={`p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                      formData.registrationRole === 'member'
+                        ? 'border-cyan-500 bg-cyan-500/10'
+                        : 'border-slate-600/50 bg-slate-700/30 hover:border-slate-500/50'
+                    }`}>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="registrationRole"
+                          value="member"
+                          checked={formData.registrationRole === 'member'}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
-                        >
-                          <option value="1">Individual (1)</option>
-                          <option value="2">Team of 2</option>
-                          <option value="3">Team of 3</option>
-                          <option value="4">Team of 4</option>
-                        </select>
-                      </div>
+                          className="mr-3 w-4 h-4 text-cyan-500 bg-slate-700 border-slate-600 focus:ring-cyan-500"
+                        />
+                        <div>
+                          <div className="flex items-center text-white font-medium">
+                            <User size={18} className="mr-2 text-cyan-400" />
+                            Team Member
+                          </div>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Register as a team member and join an existing team
+                          </p>
+                        </div>
+                      </label>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Skills */}
                 <div>

@@ -230,7 +230,35 @@ const EventsPage = () => {
     
     try {
       const response = await registrationAPI.getEventRegistrations(eventId);
-      setTeams(response.data || []);
+      const registrations = response.data || [];
+      
+      // Group registrations by team name
+      const groupedData = registrations.reduce((acc, registration) => {
+        const teamName = registration.teamName || 'Individual';
+        
+        if (!acc[teamName]) {
+          acc[teamName] = {
+            teamName: teamName,
+            members: [],
+            teamSize: registration.teamSize || 1,
+            status: registration.status,
+            registrationDate: registration.registrationDate
+          };
+        }
+        
+        acc[teamName].members.push(registration);
+        return acc;
+      }, {});
+      
+      // Convert to array and sort
+      const teamsArray = Object.values(groupedData).sort((a, b) => {
+        // Sort teams first, then individuals
+        if (a.teamName === 'Individual' && b.teamName !== 'Individual') return 1;
+        if (a.teamName !== 'Individual' && b.teamName === 'Individual') return -1;
+        return a.teamName.localeCompare(b.teamName);
+      });
+      
+      setTeams(teamsArray);
     } catch (error) {
       console.error("❌ Error fetching teams:", error);
       toast.error("Failed to fetch teams. Please try again.");
@@ -898,46 +926,110 @@ const EventsPage = () => {
                   <p className="text-lg">No teams registered for this event yet.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {teams.map((team, index) => (
-                    <div
-                      key={team._id || index}
-                      className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 hover:border-purple-500/50 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
-                      onClick={() => handleViewTeamDetails(team)}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-lg font-semibold text-purple-300">
-                          {team.teamName || 'Individual Participant'}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          team.status === 'confirmed' ? 'bg-green-800 text-green-200' :
-                          team.status === 'registered' ? 'bg-blue-800 text-blue-200' :
-                          team.status === 'cancelled' ? 'bg-red-800 text-red-200' :
-                          'bg-yellow-800 text-yellow-200'
-                        }`}>
-                          {team.status}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm">
-                        <p className="text-slate-300">
-                          <span className="font-medium">Leader:</span> {team.userId?.fullName || 'N/A'}
-                        </p>
-                        <p className="text-slate-300">
-                          <span className="font-medium">Team Size:</span> {team.teamSize || 1}
-                        </p>
-                        <p className="text-slate-400 text-xs">
-                          Registered: {new Date(team.registrationDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                      
-                      <div className="mt-3 pt-3 border-t border-slate-700/50">
-                        <p className="text-xs text-purple-400 hover:text-purple-300">
-                          Click to view details →
-                        </p>
+                <div className="space-y-6">
+                  {/* Teams Section */}
+                  {teams.filter(team => team.teamName !== 'Individual').length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-semibold text-purple-300 mb-4 flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Teams ({teams.filter(team => team.teamName !== 'Individual').length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {teams.filter(team => team.teamName !== 'Individual').map((team, index) => (
+                          <div
+                            key={`team-${index}`}
+                            className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 hover:border-purple-500/50 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                            onClick={() => handleViewTeamDetails(team)}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <h3 className="text-lg font-semibold text-purple-300">
+                                {team.teamName}
+                              </h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                team.status === 'confirmed' ? 'bg-green-800 text-green-200' :
+                                team.status === 'registered' ? 'bg-blue-800 text-blue-200' :
+                                team.status === 'cancelled' ? 'bg-red-800 text-red-200' :
+                                'bg-yellow-800 text-yellow-200'
+                              }`}>
+                                {team.status}
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <p className="text-slate-300">
+                                <span className="font-medium">Members:</span> {team.members.length}
+                              </p>
+                              <p className="text-slate-300">
+                                <span className="font-medium">Team Size:</span> {team.teamSize}
+                              </p>
+                              <p className="text-slate-400 text-xs">
+                                Registered: {new Date(team.registrationDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t border-slate-700/50">
+                              <p className="text-xs text-purple-400 hover:text-purple-300">
+                                Click to view team details →
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Individual Participants Section */}
+                  {teams.filter(team => team.teamName === 'Individual').length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-semibold text-cyan-300 mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Individual Participants ({teams.filter(team => team.teamName === 'Individual').length})
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {teams.filter(team => team.teamName === 'Individual').map((team, index) => (
+                          <div
+                            key={`individual-${index}`}
+                            className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                            onClick={() => handleViewTeamDetails(team)}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <h3 className="text-lg font-semibold text-cyan-300">
+                                Individual Participant
+                              </h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                team.status === 'confirmed' ? 'bg-green-800 text-green-200' :
+                                team.status === 'registered' ? 'bg-blue-800 text-blue-200' :
+                                team.status === 'cancelled' ? 'bg-red-800 text-red-200' :
+                                'bg-yellow-800 text-yellow-200'
+                              }`}>
+                                {team.status}
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <p className="text-slate-300">
+                                <span className="font-medium">Name:</span> {team.members[0]?.userId?.fullName || 'N/A'}
+                              </p>
+                              <p className="text-slate-300">
+                                <span className="font-medium">Email:</span> {team.members[0]?.userId?.email || 'N/A'}
+                              </p>
+                              <p className="text-slate-400 text-xs">
+                                Registered: {new Date(team.registrationDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t border-slate-700/50">
+                              <p className="text-xs text-cyan-400 hover:text-cyan-300">
+                                Click to view details →
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -974,16 +1066,18 @@ const EventsPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
-                    Team Information
+                    {selectedTeam.teamName === 'Individual' ? 'Participant Information' : 'Team Information'}
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-slate-400">Team Name</label>
-                      <p className="text-white">{selectedTeam.teamName || 'Individual'}</p>
+                      <label className="block text-sm font-medium text-slate-400">
+                        {selectedTeam.teamName === 'Individual' ? 'Participant Type' : 'Team Name'}
+                      </label>
+                      <p className="text-white">{selectedTeam.teamName}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Team Size</label>
-                      <p className="text-white">{selectedTeam.teamSize || 1}</p>
+                      <p className="text-white">{selectedTeam.teamSize}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Status</label>
@@ -1005,28 +1099,70 @@ const EventsPage = () => {
 
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
-                    Contact Information
+                    {selectedTeam.teamName === 'Individual' ? 'Contact Information' : 'Team Leader'}
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-slate-400">Team Leader</label>
-                      <p className="text-white">{selectedTeam.userId?.fullName || 'N/A'}</p>
+                      <label className="block text-sm font-medium text-slate-400">
+                        {selectedTeam.teamName === 'Individual' ? 'Name' : 'Team Leader'}
+                      </label>
+                      <p className="text-white">{selectedTeam.members[0]?.userId?.fullName || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Email</label>
-                      <p className="text-white">{selectedTeam.userId?.email || 'N/A'}</p>
+                      <p className="text-white">{selectedTeam.members[0]?.userId?.email || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Phone</label>
-                      <p className="text-white">{selectedTeam.userId?.phone || 'N/A'}</p>
+                      <p className="text-white">{selectedTeam.members[0]?.userId?.phone || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Registration Number</label>
-                      <p className="text-white">{selectedTeam.userId?.regNumber || 'N/A'}</p>
+                      <p className="text-white">{selectedTeam.members[0]?.userId?.regNumber || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Team Members Section (only for teams) */}
+              {selectedTeam.teamName !== 'Individual' && selectedTeam.members.length > 1 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
+                    Team Members ({selectedTeam.members.length})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedTeam.members.map((member, index) => (
+                      <div key={index} className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-purple-200">
+                            {index === 0 ? 'Team Leader' : `Member ${index + 1}`}
+                          </h4>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            member.registrationRole === 'leader' ? 'bg-purple-800 text-purple-200' :
+                            'bg-blue-800 text-blue-200'
+                          }`}>
+                            {member.registrationRole || 'member'}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-slate-300">
+                            <span className="font-medium">Name:</span> {member.userId?.fullName || 'N/A'}
+                          </p>
+                          <p className="text-slate-300">
+                            <span className="font-medium">Email:</span> {member.userId?.email || 'N/A'}
+                          </p>
+                          <p className="text-slate-300">
+                            <span className="font-medium">Phone:</span> {member.userId?.phone || 'N/A'}
+                          </p>
+                          <p className="text-slate-300">
+                            <span className="font-medium">Reg No:</span> {member.userId?.regNumber || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Academic Info */}
               <div className="space-y-4">
@@ -1036,27 +1172,27 @@ const EventsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-400">Branch</label>
-                    <p className="text-white">{selectedTeam.branch || 'N/A'}</p>
+                    <p className="text-white">{selectedTeam.members[0]?.branch || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-400">Year</label>
-                    <p className="text-white">{selectedTeam.year || 'N/A'}</p>
+                    <p className="text-white">{selectedTeam.members[0]?.year || 'N/A'}</p>
                   </div>
                 </div>
               </div>
 
               {/* Skills and Links */}
-              {(selectedTeam.skills?.length > 0 || selectedTeam.githubLink || selectedTeam.linkedInLink) && (
+              {(selectedTeam.members[0]?.skills?.length > 0 || selectedTeam.members[0]?.githubLink || selectedTeam.members[0]?.linkedInLink) && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
                     Skills & Links
                   </h3>
                   
-                  {selectedTeam.skills?.length > 0 && (
+                  {selectedTeam.members[0]?.skills?.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-slate-400 mb-2">Skills</label>
                       <div className="flex flex-wrap gap-2">
-                        {selectedTeam.skills.map((skill, index) => (
+                        {selectedTeam.members[0].skills.map((skill, index) => (
                           <span
                             key={index}
                             className="px-3 py-1 bg-purple-800/30 text-purple-200 rounded-full text-sm border border-purple-700/50"
@@ -1069,29 +1205,29 @@ const EventsPage = () => {
                   )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedTeam.githubLink && (
+                    {selectedTeam.members[0]?.githubLink && (
                       <div>
                         <label className="block text-sm font-medium text-slate-400">GitHub</label>
                         <a
-                          href={selectedTeam.githubLink}
+                          href={selectedTeam.members[0].githubLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-purple-400 hover:text-purple-300 underline break-all"
                         >
-                          {selectedTeam.githubLink}
+                          {selectedTeam.members[0].githubLink}
                         </a>
                       </div>
                     )}
-                    {selectedTeam.linkedInLink && (
+                    {selectedTeam.members[0]?.linkedInLink && (
                       <div>
                         <label className="block text-sm font-medium text-slate-400">LinkedIn</label>
                         <a
-                          href={selectedTeam.linkedInLink}
+                          href={selectedTeam.members[0].linkedInLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-purple-400 hover:text-purple-300 underline break-all"
                         >
-                          {selectedTeam.linkedInLink}
+                          {selectedTeam.members[0].linkedInLink}
                         </a>
                       </div>
                     )}
@@ -1100,37 +1236,37 @@ const EventsPage = () => {
               )}
 
               {/* Additional Info */}
-              {(selectedTeam.expectations || selectedTeam.description || selectedTeam.tshirtSize || selectedTeam.dietary) && (
+              {(selectedTeam.members[0]?.expectations || selectedTeam.members[0]?.description || selectedTeam.members[0]?.tshirtSize || selectedTeam.members[0]?.dietary) && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-purple-300 border-b border-slate-700/50 pb-2">
                     Additional Information
                   </h3>
                   
-                  {selectedTeam.expectations && (
+                  {selectedTeam.members[0]?.expectations && (
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Expectations</label>
-                      <p className="text-white">{selectedTeam.expectations}</p>
+                      <p className="text-white">{selectedTeam.members[0].expectations}</p>
                     </div>
                   )}
                   
-                  {selectedTeam.description && (
+                  {selectedTeam.members[0]?.description && (
                     <div>
                       <label className="block text-sm font-medium text-slate-400">Description</label>
-                      <p className="text-white">{selectedTeam.description}</p>
+                      <p className="text-white">{selectedTeam.members[0].description}</p>
                     </div>
                   )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedTeam.tshirtSize && (
+                    {selectedTeam.members[0]?.tshirtSize && (
                       <div>
                         <label className="block text-sm font-medium text-slate-400">T-Shirt Size</label>
-                        <p className="text-white">{selectedTeam.tshirtSize}</p>
+                        <p className="text-white">{selectedTeam.members[0].tshirtSize}</p>
                       </div>
                     )}
-                    {selectedTeam.dietary && (
+                    {selectedTeam.members[0]?.dietary && (
                       <div>
                         <label className="block text-sm font-medium text-slate-400">Dietary Requirements</label>
-                        <p className="text-white">{selectedTeam.dietary}</p>
+                        <p className="text-white">{selectedTeam.members[0].dietary}</p>
                       </div>
                     )}
                   </div>
