@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000', // Updated to match backend port
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://codex-website-backend.onrender.com', // Updated to match backend port
   withCredentials: true, // Important for cookies
   headers: {
     'Content-Type': 'application/json',
@@ -92,24 +92,24 @@ export const adminAPI = {
       return { success: false, error: 'Invalid admin credentials' };
     }
 
-    // If frontend validation passes, authenticate with backend
-    // We'll use the admin credentials to login through the user endpoint
-    try {
-      const response = await api.post('/api/v1/users/login', { 
-        regNumber: ADMIN_USER, 
-        password: ADMIN_PASS 
-      });
-      
-      // Check if the user has admin role
-      if (response.data.success && response.data.user && response.data.user.role === 'admin') {
-        return response.data;
-      } else {
-        return { success: false, error: 'Admin access not granted' };
-      }
-    } catch (error) {
-      console.error('Backend authentication failed:', error);
-      return { success: false, error: 'Backend authentication failed. Please ensure admin user exists in database.' };
+   
+
+    if (regNumber !== ADMIN_USER || password !== ADMIN_PASS) {
+      return { success: false, error: 'Invalid admin credentials' };
     }
+
+  if (regNumber === ADMIN_USER && password === ADMIN_PASS) {
+    return { 
+      success: true, 
+      user: { role: "admin", regNumber } 
+    };
+  } else {
+    return { 
+      success: false, 
+      error: "Invalid admin credentials" 
+    };
+  }
+
   },
 
   // Logout admin
