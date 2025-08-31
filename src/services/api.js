@@ -128,14 +128,28 @@ export const adminAPI = {
     try {
       // Try to access a protected endpoint to verify session
       const response = await api.get('/api/v1/announcements');
+      console.log('Session verification successful');
       return { success: true };
     } catch (error) {
       console.error('Session verification error:', error);
-      // Don't fail immediately on network errors, only on auth errors
+      
+      // Handle different types of errors
       if (error.response?.status === 401) {
+        console.log('Session verification failed - unauthorized');
         return { success: false, error: 'Session verification failed' };
+      } else if (error.response?.status === 403) {
+        console.log('Session verification failed - forbidden');
+        return { success: false, error: 'Access forbidden' };
+      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+        console.log('Network error during session verification - assuming session is valid');
+        return { success: true };
+      } else if (error.response?.status >= 500) {
+        console.log('Server error during session verification - assuming session is valid');
+        return { success: true };
       }
+      
       // For other errors (network, server issues), assume session is still valid
+      console.log('Other error during session verification - assuming session is valid');
       return { success: true };
     }
   },

@@ -64,6 +64,7 @@ const UsersPage = () => {
 
   // Admin authentication check
   useEffect(() => {
+    // Only redirect if we're sure the user is not authenticated
     if (!adminLoading && !adminAuthenticated) {
       router.push('/unauthorized');
     }

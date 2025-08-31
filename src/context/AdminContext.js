@@ -17,6 +17,7 @@ export const useAdmin = () => {
 export const AdminProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionVerified, setSessionVerified] = useState(false);
   const router = useRouter();
 
   // Check if admin is logged in on mount
@@ -29,36 +30,36 @@ export const AdminProvider = ({ children }) => {
           setAdmin(adminData);
           console.log('Admin data loaded from localStorage:', adminData);
           
-          // Only verify session when actually needed (on admin pages)
-          // This prevents unnecessary API calls and false session expired messages
-          const currentPath = window.location.pathname;
-          console.log('Current path:', currentPath);
-          
-          if (currentPath.startsWith('/admin')) {
-            console.log('On admin page, verifying session...');
-            // Add a small delay to avoid race conditions
-            setTimeout(async () => {
-              try {
-                const sessionResponse = await adminAPI.verifySession();
-                console.log('Session verification response:', sessionResponse);
-                if (!sessionResponse.success) {
-                  // Backend verification failed, clear local data
-                  setAdmin(null);
-                  localStorage.removeItem('adminInfo');
-                  toast.error('Session expired. Please login again.');
-                }
-              } catch (error) {
-                console.error('Session verification error:', error);
-                // Only clear on actual auth errors, not network issues
-                if (error.response?.status === 401) {
-                  setAdmin(null);
-                  localStorage.removeItem('adminInfo');
-                  toast.error('Session expired. Please login again.');
-                }
+          // Only verify session once per session, not on every page load
+          if (!sessionVerified) {
+            console.log('First time on admin page, verifying session...');
+            try {
+              const sessionResponse = await adminAPI.verifySession();
+              console.log('Session verification response:', sessionResponse);
+              if (sessionResponse.success) {
+                setSessionVerified(true);
+                console.log('Session verified successfully');
+              } else {
+                // Backend verification failed, clear local data
+                setAdmin(null);
+                localStorage.removeItem('adminInfo');
+                toast.error('Session expired. Please login again.');
               }
-            }, 100);
+            } catch (error) {
+              console.error('Session verification error:', error);
+              // Only clear on actual auth errors, not network issues
+              if (error.response?.status === 401) {
+                setAdmin(null);
+                localStorage.removeItem('adminInfo');
+                toast.error('Session expired. Please login again.');
+              } else {
+                // For other errors (network, server issues), assume session is still valid
+                console.log('Network/server error during session verification, keeping session active');
+                setSessionVerified(true);
+              }
+            }
           } else {
-            console.log('Not on admin page, skipping session verification');
+            console.log('Session already verified, skipping verification');
           }
         } catch (error) {
           console.error('Error parsing admin info:', error);
@@ -72,7 +73,7 @@ export const AdminProvider = ({ children }) => {
     };
 
     checkAdminAuth();
-  }, []);
+  }, [sessionVerified]);
 
   const login = async (regNumber, password) => {
     try {
@@ -86,6 +87,7 @@ export const AdminProvider = ({ children }) => {
           ...response.user // Include backend user data
         };
         setAdmin(adminData);
+        setSessionVerified(true); // Mark session as verified after successful login
         localStorage.setItem('adminInfo', JSON.stringify(adminData));
         toast.success('Admin login successful!');
         return { success: true };
@@ -115,12 +117,13 @@ export const AdminProvider = ({ children }) => {
     
     // Clear frontend state
     setAdmin(null);
+    setSessionVerified(false);
     localStorage.removeItem('adminInfo');
     toast.success('Logged out successfully');
     router.push('/');
   };
 
-  // Function to manually verify session when needed
+  // Function to manually verify session when needed (for critical operations)
   const verifySession = async () => {
     if (!admin) return false;
     
@@ -128,6 +131,7 @@ export const AdminProvider = ({ children }) => {
       const sessionResponse = await adminAPI.verifySession();
       if (!sessionResponse.success) {
         setAdmin(null);
+        setSessionVerified(false);
         localStorage.removeItem('adminInfo');
         toast.error('Session expired. Please login again.');
         return false;
@@ -138,6 +142,7 @@ export const AdminProvider = ({ children }) => {
       // Only clear on actual auth errors
       if (error.response?.status === 401) {
         setAdmin(null);
+        setSessionVerified(false);
         localStorage.removeItem('adminInfo');
         toast.error('Session expired. Please login again.');
         return false;
@@ -150,13 +155,8 @@ export const AdminProvider = ({ children }) => {
   // Function to navigate to admin routes with proper authentication
   const navigateToAdmin = async (path = '/admin') => {
     if (admin) {
-      // Verify session before navigating to admin pages
-      const isValid = await verifySession();
-      if (isValid) {
-        router.push(`${path}?admin=true`);
-      } else {
-        router.push('/auth');
-      }
+      // Don't verify session on every navigation, just navigate
+      router.push(path);
     } else {
       toast.error('Admin access required');
       router.push('/auth');

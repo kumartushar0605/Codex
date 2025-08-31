@@ -10,20 +10,22 @@ const AdminPage = () => {
     const { isAuthenticated: userAuthenticated, loading: userLoading } = useUser();
     const router = useRouter();
 
-      useEffect(() => {
-    if (!adminLoading && !userLoading) {
-      if (!adminAuthenticated) {
-        if (userAuthenticated) {
-          // User is logged in but not admin, redirect to unauthorized page
-          router.push('/unauthorized');
-        } else {
-          // No one is logged in, redirect to auth page
-          router.push('/auth');
+    useEffect(() => {
+        // Only redirect if we're sure the user is not authenticated
+        if (!adminLoading && !userLoading) {
+            if (!adminAuthenticated) {
+                if (userAuthenticated) {
+                    // User is logged in but not admin, redirect to unauthorized page
+                    router.push('/unauthorized');
+                } else {
+                    // No one is logged in, redirect to auth page
+                    router.push('/auth');
+                }
+            }
         }
-      }
-    }
-  }, [adminAuthenticated, adminLoading, userAuthenticated, userLoading, router]);
+    }, [adminAuthenticated, adminLoading, userAuthenticated, userLoading, router]);
 
+    // Show loading while checking authentication
     if (adminLoading || userLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
@@ -35,8 +37,9 @@ const AdminPage = () => {
         );
     }
 
+    // If not authenticated, don't render anything (will redirect)
     if (!adminAuthenticated) {
-        return null; // Will redirect
+        return null;
     }
 
     // Dashboard summary content only (no sidebar)
